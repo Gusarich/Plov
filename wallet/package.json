@@ -1,0 +1,29 @@
+{
+    "name": "plov-wallet",
+    "version": "1.0.0",
+    "description": "Plov CLI wallet",
+    "main": "bin/index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Gusarich/Plov.git"
+    },
+    "keywords": [
+        "plov",
+        "cli"
+    ],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Gusarich/Plov/issues"
+    },
+    "homepage": "https://github.com/Gusarich/Plov#readme",
+    "bin": {
+        "plov": "./bin/index.js"
+    },
+    "dependencies": {
+        "yargs": "^17.0.1"
+    }
+}
