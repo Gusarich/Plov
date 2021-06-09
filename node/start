@@ -1,0 +1,5 @@
+node src/server.js --port $1 &
+P1=$!
+node src/client.js --port $1 --peer $2 &
+P2=$!
+wait $P1 $P2
