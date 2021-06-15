@@ -12,7 +12,7 @@
       * [Usage](#usage-1)
 
 ## General info
-Plov is Russian food
+Plov is next-gen Blockchain.
 
 ## Wallet
 ### Installation
