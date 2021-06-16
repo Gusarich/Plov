@@ -24,7 +24,7 @@ class Block {
 function createNewBlock (data) {
     let previousBlock = blockchain[blockchain.length - 1]
     return new Block (
-        previousBlock.index,
+        previousBlock.index + 1,
         previousBlock.hash,
         getCurrentTimestamp(),
         data
@@ -37,6 +37,20 @@ function broadcastBlock (block) {
         data: block
     }
     broadcast(message)
+}
+
+function verifyBlock (block) {
+    return (block.index == blockchain[block.index - 1].index + 1) &&
+           (blockchain[block.index - 1].hash == block.previousHash) &&
+           (Math.abs(block.timestamp - getCurrentTimestamp()) <= 500) &&
+           (block.hash == getBlockHash(block))
+}
+
+function verifyChain () {
+    for (let i = 0; i < blockchain.length; i += 1) {
+        if (!verifyBlock(blockchain[i])) return false
+    }
+    return true
 }
 
 var blockchain = []
@@ -106,25 +120,30 @@ function initConnection (ws, client) {
                     data: blockchain[blockchain.length - 1].index
                 })
                 break
+
             case Actions.QUERY_CHAIN:
                 send(ws, {
                     action: Actions.RESPONSE_CHAIN,
                     data: blockchain
                 })
                 break
+
             case Actions.QUERY_PEERS:
                 send(ws, {
                     action: Actions.RESPONSE_PEERS,
                     data: getPeers()
                 })
                 break
+
             case Actions.RESPONSE_BLOCKCHAIN_HEIGHT:
                 // TODO //
                 break
+
             case Actions.RESPONSE_CHAIN:
                 let chain = message.data
                 if (verifyChain(chain)) blockchain = chain
                 break
+
             case Actions.RESPONSE_PEERS:
                 if (ws.url) {
                     let index = message.data.indexOf(ws.url)
@@ -132,6 +151,12 @@ function initConnection (ws, client) {
                 }
                 peersQueue = new Set([...peersQueue, ...message.data])
                 break
+
+            case Actions.BROADCAST_BLOCK:
+                if (message.data.index == blockchain[blockchain.length - 1].index + 1 && verifyBlock(message.data)) {
+                    blockchain.push(message.data)
+                    broadcastBlock(message.data)
+                }
         }
     })
 
@@ -150,8 +175,6 @@ function connectToPeer (peer) {
 }
 
 setInterval(() => {
-    //console.log(peers[2])
-    console.log(peers.length, peersQueue.size)
     if (peers.length < PEERS_TO_KEEP_CONNECTED && peersQueue.size > 0) {
         connectToPeer(peersQueue.values().next().value)
     }
@@ -189,4 +212,8 @@ if (firstConnection !== undefined) {
 
 if (genesis) {
     blockchain.push(new Block(0, '', getCurrentTimestamp(), 'Plov'))
+    setInterval(() => {
+        let block = createNewBlock('Hey guys <3')
+        broadcastBlock(block)
+    }, 5000)
 }
