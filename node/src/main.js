@@ -33,12 +33,14 @@ var blockchain = []
 //============WebSocket=P2P============//
 const WebSocket = require('ws')
 const Actions = {
-    QUERY_BLOCKCHAIN_HEIGHT: 1,
-    QUERY_CHAIN: 2,
-    QUERY_PEERS: 3,
-    RESPONSE_BLOCKCHAIN_HEIGHT: 4,
-    RESPONSE_CHAIN: 5,
-    RESPONSE_PEERS: 6
+    QUERY_UNIQUE_ID: 1,
+    QUERY_BLOCKCHAIN_HEIGHT: 2,
+    QUERY_CHAIN: 3,
+    QUERY_PEERS: 4,
+    RESPONSE_UNIQUE_ID: 5,
+    RESPONSE_BLOCKCHAIN_HEIGHT: 6,
+    RESPONSE_CHAIN: 7,
+    RESPONSE_PEERS: 8
 }
 const PEERS_TO_KEEP_CONNECTED = 3
 
@@ -55,24 +57,22 @@ function getPeers () {
 
 function initP2PServer (port) {
     const wsServer = new WebSocket.Server({ port: port })
-    console.log(wsServer.url)
-    wsServer.on('connection', (ws) => initConnection(ws))
+    wsServer.on('connection', (ws) => initConnection(ws, true))
 }
 
 function send (ws, message) {
-    console.log('BBBBBBBBBBBBBBBBb', message, JSON.stringify(message))
     ws.send(JSON.stringify(message))
 }
 
-function initConnection (ws) {
+function initConnection (ws, client) {
     peers.push(ws)
 
-    send(ws, {action: Actions.QUERY_PEERS})
+    if (!client) send(ws, {action: Actions.QUERY_PEERS})
 
     ws.on('message', (data) => {
         let message = JSON.parse(data)
         console.log('Received message:')
-        console.log('<<<<<<<<', message, '>>>>>>>>')
+        console.log('<', message, '>')
         switch (message.action) {
             case Actions.QUERY_BLOCKCHAIN_HEIGHT:
                 send(ws, {
@@ -100,8 +100,10 @@ function initConnection (ws) {
                 if (verifyChain(chain)) blockchain = chain
                 break
             case Actions.RESPONSE_PEERS:
-                console.log('ZZZZZZ', ws.url, wsServer)
-                if (ws.url) message.data.splice(message.data.indexOf(ws.url), 1)
+                if (ws.url) {
+                    let index = message.data.indexOf(ws.url)
+                    if (index >= 0) message.data.splice(message.data.indexOf(ws.url), 1)
+                }
                 peersQueue = new Set([...peersQueue, ...message.data])
                 break
         }
@@ -118,10 +120,12 @@ function closeConnection (ws) {
 function connectToPeer (peer) {
     peersQueue.delete(peer)
     let ws = new WebSocket(peer)
-    ws.on('open', () => initConnection(ws))
+    ws.on('open', () => initConnection(ws, false))
 }
 
 setInterval(() => {
+    //console.log(peers[2])
+    console.log(peers.length, peersQueue.size)
     if (peers.length < PEERS_TO_KEEP_CONNECTED && peersQueue.size > 0) {
         connectToPeer(peersQueue.values().next().value)
     }
