@@ -6,9 +6,14 @@ function getCurrentTimestamp () {
 }
 
 function getBlockHash (block) {
-    let string = block.index.toString() + block.previousHash + block.timestamp.toString() + block.data
-    let hash = crypto.createHash('sha256').update(string).digest('hex')
+    let hash = crypto.createHash('sha512').update(getBlockString(block)).digest('hex')
     return hash
+}
+
+function getBlockString (block) {
+    let string = block.index.toString() + block.previousHash + block.timestamp.toString() + block.data + block.producer
+    if (block.hash) string += block.hash
+    return string
 }
 
 function getBlockchainHeight () {
@@ -17,22 +22,24 @@ function getBlockchainHeight () {
 }
 
 class Block {
-    constructor (index, previousHash, timestamp, data) {
+    constructor (index, previousHash, data, keypair) {
         this.index = index
         this.previousHash = previousHash
-        this.timestamp = timestamp
+        this.timestamp = getCurrentTimestamp()
         this.data = data
+        this.producer = exportPublicKey(keypair.publicKey)
         this.hash = getBlockHash(this)
+        this.signature = signMessage(keypair.privateKey, getBlockString(this))
     }
 }
 
-function createNewBlock (data) {
+function createNewBlock (data, keypair) {
     let previousBlock = blockchain[blockchain.length - 1]
     return new Block (
         previousBlock.index + 1,
         previousBlock.hash,
-        getCurrentTimestamp(),
-        data
+        data,
+        keypair
     )
 }
 
@@ -48,7 +55,8 @@ function verifyBlock (block) {
     return (block.index == blockchain[block.index - 1].index + 1) &&
            (blockchain[block.index - 1].hash == block.previousHash) &&
            (Math.abs(block.timestamp - getCurrentTimestamp()) <= 500) &&
-           (block.hash == getBlockHash(block))
+           (block.hash == getBlockHash(block)) &&
+           (verifySignature(block.producer, getBlockString(block), block.signature))
 }
 
 function verifyChain () {
@@ -59,29 +67,33 @@ function verifyChain () {
 }
 
 function generateKeyPair () {
-    return crypto.generateKeyPairSync('rsa', {modulusLength: 2048})
+    return crypto.generateKeyPairSync('ed25519')
+}
+
+function exportPublicKey (publicKey) {
+    return publicKey.export({type: 'spki', format: 'der'}).toString('hex').slice(24)
 }
 
 function signMessage (privateKey, message) {
     return crypto.sign(
-        'sha256',
+        null,
         Buffer.from(message),
-        {
-        	key: privateKey,
-        	padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-        }
+        privateKey
     ).toString('hex')
 }
 
 function verifySignature (publicKey, message, signature) {
+    console.log(publicKey)
+    console.log(Buffer.from(publicKey, 'hex'))
     return crypto.verify(
-        'sha256',
+        null,
     	Buffer.from(message),
     	{
-    		key: publicKey,
-    		padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-    	},
-    	Buffer.from(signature, 'hex'),
+            key: Buffer.from(publicKey, 'hex'),
+            format: 'der',
+            type: 'spki'
+        },
+    	Buffer.from(signature, 'hex')
     )
 }
 
@@ -253,11 +265,15 @@ if (!isNaN(httpPort)) initHTTPServer(httpPort)
 
 if (firstConnection !== undefined) connectToPeer(firstConnection)
 
+//=========//
+let keypair = generateKeyPair()
+//=========//
+
 if (genesis) {
-    blockchain.push(new Block(0, '', getCurrentTimestamp(), 'Plov'))
+    blockchain.push(new Block(0, '', 'Genesis block!', keypair))
     setInterval(() => {
         console.log('<<<<<<New block>>>>>>')
-        let block = createNewBlock('Hey guys <3')
+        let block = createNewBlock('Hey guys <3', keypair)
         blockchain.push(block)
         broadcastBlock(block)
     }, 5000)
@@ -265,4 +281,5 @@ if (genesis) {
 
 setInterval(() => {
     console.log(blockchain.length)
+    console.log(verifySignature(blockchain[blockchain.length - 1].producer, getBlockString(blockchain[blockchain.length - 1]), blockchain[blockchain.length - 1].signature))
 }, 1000)
