@@ -21,6 +21,24 @@ class Block {
     }
 }
 
+function createNewBlock (data) {
+    let previousBlock = blockchain[blockchain.length - 1]
+    return new Block (
+        previousBlock.index,
+        previousBlock.hash,
+        getCurrentTimestamp(),
+        data
+    )
+}
+
+function broadcastBlock (block) {
+    let message = {
+        action: Actions.BROADCAST_BLOCK,
+        data: block
+    }
+    broadcast(message)
+}
+
 var blockchain = []
 //=============Blockchain==============//
 
@@ -37,12 +55,16 @@ const Actions = {
     QUERY_BLOCKCHAIN_HEIGHT: 2,
     QUERY_CHAIN: 3,
     QUERY_PEERS: 4,
+
     RESPONSE_UNIQUE_ID: 5,
     RESPONSE_BLOCKCHAIN_HEIGHT: 6,
     RESPONSE_CHAIN: 7,
-    RESPONSE_PEERS: 8
+    RESPONSE_PEERS: 8,
+
+    BROADCAST_BLOCK: 9,
+    BROADCAST_TRANSACTION: 10
 }
-const PEERS_TO_KEEP_CONNECTED = 3
+const PEERS_TO_KEEP_CONNECTED = 2
 
 var peers = []
 var peersQueue = new Set()
@@ -62,6 +84,10 @@ function initP2PServer (port) {
 
 function send (ws, message) {
     ws.send(JSON.stringify(message))
+}
+
+function broadcast (message) {
+    for (let i = 0; i < peers.length; i += 1) send(peers[i], message)
 }
 
 function initConnection (ws, client) {
