@@ -1,5 +1,5 @@
 //=============Blockchain==============//
-const CryptoJS = require('crypto-js')
+const crypto = require('crypto')
 
 function getCurrentTimestamp () {
     return Math.round(new Date().getTime() / 1000)
@@ -7,8 +7,8 @@ function getCurrentTimestamp () {
 
 function getBlockHash (block) {
     let string = block.index.toString() + block.previousHash + block.timestamp.toString() + block.data
-    let hexdigest = CryptoJS.SHA256(string)
-    return hexdigest.toString()
+    let hash = crypto.createHash('sha256').update(string).digest('hex')
+    return hash
 }
 
 function getBlockchainHeight () {
@@ -56,6 +56,33 @@ function verifyChain () {
         if (!verifyBlock(blockchain[i])) return false
     }
     return true
+}
+
+function generateKeyPair () {
+    return crypto.generateKeyPairSync('rsa', {modulusLength: 2048})
+}
+
+function signMessage (privateKey, message) {
+    return crypto.sign(
+        'sha256',
+        Buffer.from(message),
+        {
+        	key: privateKey,
+        	padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+        }
+    ).toString('hex')
+}
+
+function verifySignature (publicKey, message, signature) {
+    return crypto.verify(
+        'sha256',
+    	Buffer.from(message),
+    	{
+    		key: publicKey,
+    		padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+    	},
+    	Buffer.from(signature, 'hex'),
+    )
 }
 
 var blockchain = []
