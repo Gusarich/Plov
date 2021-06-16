@@ -19,6 +19,7 @@ def _run_in_background(cmd, prefix=''):
 
 def run_in_background(cmd):
     global process_index
+    process_color = process_index % 8 + 1
     process_index += 1
-    prefix = f'\x1b[1;{29 + process_index};{48 - process_index}m[{process_index}]\x1b[0m '
+    prefix = f'\x1b[1;{29 + process_color};{48 - process_color}m[{process_index}]\x1b[0m '
     threading.Thread(target=_run_in_background, args=(cmd, prefix,)).start()

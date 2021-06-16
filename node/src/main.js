@@ -11,6 +11,11 @@ function getBlockHash (block) {
     return hexdigest.toString()
 }
 
+function getBlockchainHeight () {
+    if (blockchain.length) return blockchain[blockchain.length - 1].index
+    else return -1
+}
+
 class Block {
     constructor (index, previousHash, timestamp, data) {
         this.index = index
@@ -107,17 +112,20 @@ function broadcast (message) {
 function initConnection (ws, client) {
     peers.push(ws)
 
-    if (!client) send(ws, {action: Actions.QUERY_PEERS})
+    if (!client) {
+        send(ws, {action: Actions.QUERY_PEERS})
+        send(ws, {action: Actions.QUERY_BLOCKCHAIN_HEIGHT})
+    }
 
     ws.on('message', (data) => {
         let message = JSON.parse(data)
-        console.log('Received message:')
-        console.log('<', message, '>')
+        //console.log('Received message:')
+        //console.log('<', message, '>')
         switch (message.action) {
             case Actions.QUERY_BLOCKCHAIN_HEIGHT:
                 send(ws, {
                     action: Actions.RESPONSE_BLOCKCHAIN_HEIGHT,
-                    data: blockchain[blockchain.length - 1].index
+                    data: getBlockchainHeight()
                 })
                 break
 
@@ -136,7 +144,7 @@ function initConnection (ws, client) {
                 break
 
             case Actions.RESPONSE_BLOCKCHAIN_HEIGHT:
-                // TODO //
+                if (message.data > getBlockchainHeight()) send(ws, {action: Actions.QUERY_CHAIN})
                 break
 
             case Actions.RESPONSE_CHAIN:
@@ -153,7 +161,7 @@ function initConnection (ws, client) {
                 break
 
             case Actions.BROADCAST_BLOCK:
-                if (message.data.index == blockchain[blockchain.length - 1].index + 1 && verifyBlock(message.data)) {
+                if (message.data.index == getBlockchainHeight() + 1 && verifyBlock(message.data)) {
                     blockchain.push(message.data)
                     broadcastBlock(message.data)
                 }
@@ -213,7 +221,12 @@ if (firstConnection !== undefined) {
 if (genesis) {
     blockchain.push(new Block(0, '', getCurrentTimestamp(), 'Plov'))
     setInterval(() => {
+        console.log('<<<<<<New block>>>>>>')
         let block = createNewBlock('Hey guys <3')
         broadcastBlock(block)
     }, 5000)
 }
+
+setInterval(() => {
+    console.log(blockchain.length)
+}, 1000)
