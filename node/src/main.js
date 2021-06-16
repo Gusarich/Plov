@@ -63,25 +63,33 @@ var blockchain = []
 
 
 //==============HTTP=API===============//
+const express = require('express')
+const bodyParser = require('body-parser')
 
+function initHTTPServer (port) {
+    var app = express()
+    app.use(bodyParser.json())
+    app.get('/getBlockchainHeight', (req, res) => res.send(JSON.stringify(getBlockchainHeight())))
+    app.get('/getBlock', (req, res) => res.send(JSON.stringify(blockchain[req.query.index])))
+    app.get('/getPeers', (req, res) => res.send(JSON.stringify(getPeers())))
+    app.listen(port)
+}
 //==============HTTP=API===============//
 
 
 //============WebSocket=P2P============//
 const WebSocket = require('ws')
 const Actions = {
-    QUERY_UNIQUE_ID: 1,
-    QUERY_BLOCKCHAIN_HEIGHT: 2,
-    QUERY_CHAIN: 3,
-    QUERY_PEERS: 4,
+    QUERY_BLOCKCHAIN_HEIGHT: 1,
+    QUERY_CHAIN: 2,
+    QUERY_PEERS: 3,
 
-    RESPONSE_UNIQUE_ID: 5,
-    RESPONSE_BLOCKCHAIN_HEIGHT: 6,
-    RESPONSE_CHAIN: 7,
-    RESPONSE_PEERS: 8,
+    RESPONSE_BLOCKCHAIN_HEIGHT: 4,
+    RESPONSE_CHAIN: 5,
+    RESPONSE_PEERS: 6,
 
-    BROADCAST_BLOCK: 9,
-    BROADCAST_TRANSACTION: 10
+    BROADCAST_BLOCK: 7,
+    BROADCAST_TRANSACTION: 8
 }
 const PEERS_TO_KEEP_CONNECTED = 2
 
@@ -190,13 +198,17 @@ setInterval(() => {
 //============WebSocket=P2P============//
 
 
-var port
+var wsPort
+var httpPort
 var firstConnection
 var genesis
 
 for (let i = 0; i < process.argv.length - 1; i += 1) {
-    if (process.argv[i] == '--port') {
-        port = Number(process.argv[i + 1])
+    if (process.argv[i] == '--ws-port') {
+        wsPort = Number(process.argv[i + 1])
+    }
+    if (process.argv[i] == '--http-port') {
+        httpPort = Number(process.argv[i + 1])
     }
     if (process.argv[i] == '--peer') {
         firstConnection = process.argv[i + 1]
@@ -207,22 +219,19 @@ for (let i = 0; i < process.argv.length - 1; i += 1) {
 }
 if (process.argv[process.argv.length - 1] == '--genesis') genesis = true
 
-if (isNaN(port)) {
-    process.exit(1)
-}
-else {
-    initP2PServer(port)
-}
+if (isNaN(wsPort)) process.exit(1)
+else initP2PServer(wsPort)
 
-if (firstConnection !== undefined) {
-    connectToPeer(firstConnection)
-}
+if (!isNaN(httpPort)) initHTTPServer(httpPort)
+
+if (firstConnection !== undefined) connectToPeer(firstConnection)
 
 if (genesis) {
     blockchain.push(new Block(0, '', getCurrentTimestamp(), 'Plov'))
     setInterval(() => {
         console.log('<<<<<<New block>>>>>>')
         let block = createNewBlock('Hey guys <3')
+        blockchain.push(block)
         broadcastBlock(block)
     }, 5000)
 }
