@@ -71,8 +71,6 @@ function broadcastBlock (block) {
 }
 
 function verifyBlock (block) {
-    console.log(block.hash)
-    console.log(getBlockHash(block))
     return (block.index == blockchain[block.index - 1].index + 1) &&
            (blockchain[block.index - 1].hash == block.previousHash) &&
            (block.hash == getBlockHash(block)) &&
@@ -131,7 +129,7 @@ const Actions = {
     BROADCAST_BLOCK: 7,
     BROADCAST_TRANSACTION: 8
 }
-const PEERS_TO_KEEP_CONNECTED = 2
+const PEERS_TO_KEEP_CONNECTED = 3
 
 var peers = []
 var peersQueue = new Set()
@@ -167,8 +165,6 @@ function initConnection (ws, client) {
 
     ws.on('message', (data) => {
         let message = JSON.parse(data)
-        //console.log('Received message:')
-        //console.log('<', message, '>')
         switch (message.action) {
             case Actions.QUERY_BLOCKCHAIN_HEIGHT:
                 send(ws, {
@@ -225,9 +221,12 @@ function closeConnection (ws) {
 }
 
 function connectToPeer (peer) {
-    peersQueue.delete(peer)
-    let ws = new WebSocket(peer)
-    ws.on('open', () => initConnection(ws, false))
+    console.log(getPeers(), peer)
+    if (!getPeers().includes(peer)) {
+        peersQueue.delete(peer)
+        let ws = new WebSocket(peer)
+        ws.on('open', () => initConnection(ws, false))
+    }
 }
 
 setInterval(() => {
@@ -280,5 +279,4 @@ if (genesis) {
 
 setInterval(() => {
     console.log(blockchain.length)
-    if (blockchain.length > 1) console.log(verifyBlock(blockchain[blockchain.length - 1]))
 }, 1000)
