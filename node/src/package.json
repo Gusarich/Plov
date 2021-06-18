@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@arcblock/forge-sdk": "^1.6.0",
+    "big.js": "^6.1.1",
+    "bignumber.js": "^9.0.1",
+    "crypto": "^1.0.1",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
+    "ws": "^7.5.0"
+  }
+}

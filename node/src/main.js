@@ -1,19 +1,38 @@
+//============Cryptography=============//
+const BigNumber = require('bignumber.js')
+
+function exportUint8Array (array) {
+    let hex = [...new Uint8Array(array)].map(x => x.toString(16).padStart(2, '0')).join('')
+    return new BigNumber(hex, 16).toString(36)
+}
+
+function importUint8Array (string) {
+    let num = new BigNumber(string, 36)
+    let array = []
+    while (num.gte(256)) {
+        array.push(num.mod(256).toNumber())
+        num = num.idiv(256)
+    }
+    array.push(num.toNumber())
+    return new Uint8Array(array.reverse())
+}
+//============Cryptography=============//
+
+
 //=============Blockchain==============//
-const crypto = require('crypto')
+const nacl = require('tweetnacl')
+const decodeUTF8 = require('tweetnacl-util').decodeUTF8
 
 function getCurrentTimestamp () {
     return Math.round(new Date().getTime() / 1000)
 }
 
 function getBlockHash (block) {
-    let hash = crypto.createHash('sha512').update(getBlockString(block)).digest('hex')
-    return hash
+    return exportUint8Array(nacl.hash(decodeUTF8(getBlockString(block))))
 }
 
 function getBlockString (block) {
-    let string = block.index.toString() + block.previousHash + block.timestamp.toString() + block.data + block.producer
-    if (block.hash) string += block.hash
-    return string
+    return block.index.toString() + block.previousHash + block.timestamp.toString() + block.data + block.producer
 }
 
 function getBlockchainHeight () {
@@ -27,9 +46,9 @@ class Block {
         this.previousHash = previousHash
         this.timestamp = getCurrentTimestamp()
         this.data = data
-        this.producer = exportPublicKey(keypair.publicKey)
+        this.producer = exportUint8Array(keypair.publicKey)
         this.hash = getBlockHash(this)
-        this.signature = signMessage(keypair.privateKey, getBlockString(this))
+        this.signature = signMessage(getBlockString(this) + this.hash, keypair.secretKey)
     }
 }
 
@@ -52,11 +71,12 @@ function broadcastBlock (block) {
 }
 
 function verifyBlock (block) {
+    console.log(block.hash)
+    console.log(getBlockHash(block))
     return (block.index == blockchain[block.index - 1].index + 1) &&
            (blockchain[block.index - 1].hash == block.previousHash) &&
-           (Math.abs(block.timestamp - getCurrentTimestamp()) <= 500) &&
            (block.hash == getBlockHash(block)) &&
-           (verifySignature(block.producer, getBlockString(block), block.signature))
+           (verifySignature(getBlockString(block) + block.hash, block.signature, importUint8Array(block.producer)))
 }
 
 function verifyChain () {
@@ -67,34 +87,15 @@ function verifyChain () {
 }
 
 function generateKeyPair () {
-    return crypto.generateKeyPairSync('ed25519')
+    return nacl.sign.keyPair()
 }
 
-function exportPublicKey (publicKey) {
-    return publicKey.export({type: 'spki', format: 'der'}).toString('hex').slice(24)
+function signMessage (message, secretKey) {
+    return exportUint8Array(nacl.sign.detached(decodeUTF8(message), secretKey))
 }
 
-function signMessage (privateKey, message) {
-    return crypto.sign(
-        null,
-        Buffer.from(message),
-        privateKey
-    ).toString('hex')
-}
-
-function verifySignature (publicKey, message, signature) {
-    console.log(publicKey)
-    console.log(Buffer.from(publicKey, 'hex'))
-    return crypto.verify(
-        null,
-    	Buffer.from(message),
-    	{
-            key: Buffer.from(publicKey, 'hex'),
-            format: 'der',
-            type: 'spki'
-        },
-    	Buffer.from(signature, 'hex')
-    )
+function verifySignature (message, signature, publicKey) {
+    return nacl.sign.detached.verify(decodeUTF8(message), importUint8Array(signature), publicKey)
 }
 
 var blockchain = []
@@ -237,6 +238,8 @@ setInterval(() => {
 //============WebSocket=P2P============//
 
 
+const keypair = generateKeyPair()
+
 var wsPort
 var httpPort
 var firstConnection
@@ -265,10 +268,6 @@ if (!isNaN(httpPort)) initHTTPServer(httpPort)
 
 if (firstConnection !== undefined) connectToPeer(firstConnection)
 
-//=========//
-let keypair = generateKeyPair()
-//=========//
-
 if (genesis) {
     blockchain.push(new Block(0, '', 'Genesis block!', keypair))
     setInterval(() => {
@@ -281,5 +280,5 @@ if (genesis) {
 
 setInterval(() => {
     console.log(blockchain.length)
-    console.log(verifySignature(blockchain[blockchain.length - 1].producer, getBlockString(blockchain[blockchain.length - 1]), blockchain[blockchain.length - 1].signature))
+    if (blockchain.length > 1) console.log(verifyBlock(blockchain[blockchain.length - 1]))
 }, 1000)
