@@ -215,7 +215,7 @@ function initConnection (ws, client) {
 
             case Actions.BROADCAST_BLOCK:
                 if (message.data.index == getBlockchainHeight() + 1 && verifyBlock(message.data)) {
-                    blockchain.push(message.data)
+                    pushBlock(message.data)
                     broadcastBlock(message.data)
                 }
         }
@@ -276,11 +276,11 @@ if (!isNaN(httpPort)) initHTTPServer(httpPort)
 if (firstConnection !== undefined) connectToPeer(firstConnection)
 
 if (genesis) {
-    blockchain.push(new Block(0, '', 'Genesis block!', keypair))
+    pushBlock(new Block(0, '', 'Genesis block!', keypair))
     setInterval(() => {
         console.log('<<<<<<New block>>>>>>')
         let block = createNewBlock('Hey guys <3', keypair)
-        blockchain.push(block)
+        pushBlock(block)
         broadcastBlock(block)
     }, 3000)
 }
