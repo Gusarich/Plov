@@ -70,6 +70,11 @@ function broadcastBlock (block) {
     broadcast(message)
 }
 
+function pushBlock (block) {
+    blockchain.push(block)
+    blockchainState.block = block.index
+}
+
 function verifyBlock (block) {
     return (block.index == blockchain[block.index - 1].index + 1) &&
            (blockchain[block.index - 1].hash == block.previousHash) &&
@@ -97,6 +102,10 @@ function verifySignature (message, signature, publicKey) {
 }
 
 var blockchain = []
+var blockchainState = {
+    block: 0,
+    accounts: {}
+}
 //=============Blockchain==============//
 
 
@@ -221,7 +230,6 @@ function closeConnection (ws) {
 }
 
 function connectToPeer (peer) {
-    console.log(getPeers(), peer)
     if (!getPeers().includes(peer)) {
         peersQueue.delete(peer)
         let ws = new WebSocket(peer)
@@ -274,7 +282,7 @@ if (genesis) {
         let block = createNewBlock('Hey guys <3', keypair)
         blockchain.push(block)
         broadcastBlock(block)
-    }, 5000)
+    }, 3000)
 }
 
 setInterval(() => {
