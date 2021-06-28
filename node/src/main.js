@@ -32,7 +32,9 @@ function getBlockHash (block) {
 }
 
 function getBlockString (block) {
-    return block.index.toString() + block.previousHash + block.timestamp.toString() + block.data + block.producer
+    let transactionsString = ''
+    for (let i = 0; i < block.transactions.length; i += 1) transactionsString += block.transactions[i].hash
+    return block.index.toString() + block.previousHash + block.timestamp.toString() + transactionsString + block.producer
 }
 
 function getBlockchainHeight () {
@@ -41,23 +43,23 @@ function getBlockchainHeight () {
 }
 
 class Block {
-    constructor (index, previousHash, data, keypair) {
+    constructor (index, previousHash, transactions, keypair) {
         this.index = index
         this.previousHash = previousHash
         this.timestamp = getCurrentTimestamp()
-        this.data = data
+        this.transactions = transactions
         this.producer = exportUint8Array(keypair.publicKey)
         this.hash = getBlockHash(this)
-        this.signature = signMessage(getBlockString(this) + this.hash, keypair.secretKey)
+        this.signature = signMessage(this.hash, keypair.secretKey)
     }
 }
 
-function createNewBlock (data, keypair) {
+function createNewBlock (transactions, keypair) {
     let previousBlock = blockchain[blockchain.length - 1]
     return new Block (
         previousBlock.index + 1,
         previousBlock.hash,
-        data,
+        transactions,
         keypair
     )
 }
@@ -70,16 +72,29 @@ function broadcastBlock (block) {
     broadcast(message)
 }
 
+function broadcastTransaction (transaction) {
+    let message = {
+        action: Actions.BROADCAST_TRANSACTION,
+        data: transaction
+    }
+    broadcast(message)
+}
+
 function pushBlock (block) {
     blockchain.push(block)
     blockchainState.block = block.index
+    transactionPool = transactionPool.filter(transaction => !block.transactions.includes(transaction))
+    console.log(transactionPool)
 }
 
 function verifyBlock (block) {
+    for (let i = 0; i < block.transactions.length; i += 1) {
+        if (!verifyTransaction(block.transactions[i])) return false
+    }
     return (block.index == blockchain[block.index - 1].index + 1) &&
            (blockchain[block.index - 1].hash == block.previousHash) &&
            (block.hash == getBlockHash(block)) &&
-           (verifySignature(getBlockString(block) + block.hash, block.signature, importUint8Array(block.producer)))
+           (verifySignature(block.hash, block.signature, importUint8Array(block.producer)))
 }
 
 function verifyChain () {
@@ -101,11 +116,20 @@ function verifySignature (message, signature, publicKey) {
     return nacl.sign.detached.verify(decodeUTF8(message), importUint8Array(signature), publicKey)
 }
 
+function verifyTransaction (transaction) {
+    return (transaction.fromPublicKey in blockchainState.accounts) &&
+           (transaction.nonce == blockchainState.accounts[transaction.fromPublicKey].nonce + 1) &&
+           (transaction.hash == getTransactionHash(transaction)) &&
+           (verifySignature(transaction.hash, transaction.signature, importUint8Array(transaction.fromPublicKey))) &&
+           (transaction.amount <= blockchainState.accounts[transaction.fromPublicKey].balance)
+}
+
 var blockchain = []
 var blockchainState = {
     block: 0,
     accounts: {}
 }
+var transactionPool = []
 //=============Blockchain==============//
 
 
@@ -218,6 +242,12 @@ function initConnection (ws, client) {
                     pushBlock(message.data)
                     broadcastBlock(message.data)
                 }
+
+            case Actions.BROADCAST_TRANSACTION:
+                if (verifyTransaction(message.data)) {
+                    transactionPool.push(message.data)
+                    broadcastTransaction(message.data)
+                }
         }
     })
 
@@ -276,10 +306,10 @@ if (!isNaN(httpPort)) initHTTPServer(httpPort)
 if (firstConnection !== undefined) connectToPeer(firstConnection)
 
 if (genesis) {
-    pushBlock(new Block(0, '', 'Genesis block!', keypair))
+    pushBlock(new Block(0, '', [], keypair))
     setInterval(() => {
         console.log('<<<<<<New block>>>>>>')
-        let block = createNewBlock('Hey guys <3', keypair)
+        let block = createNewBlock(transactionPool, keypair)
         pushBlock(block)
         broadcastBlock(block)
     }, 3000)
