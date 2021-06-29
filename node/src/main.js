@@ -84,7 +84,6 @@ function pushBlock (block) {
     blockchain.push(block)
     blockchainState.block = block.index
     transactionPool = transactionPool.filter(transaction => !block.transactions.includes(transaction))
-    console.log(transactionPool)
 }
 
 function verifyBlock (block) {
@@ -140,9 +139,20 @@ const bodyParser = require('body-parser')
 function initHTTPServer (port) {
     var app = express()
     app.use(bodyParser.json())
+    app.use(bodyParser.urlencoded({extended: true}))
+
     app.get('/getBlockchainHeight', (req, res) => res.send(JSON.stringify(getBlockchainHeight())))
     app.get('/getBlock', (req, res) => res.send(JSON.stringify(blockchain[req.query.index])))
     app.get('/getPeers', (req, res) => res.send(JSON.stringify(getPeers())))
+
+    app.post('/sendTx', (req, res) => {
+        console.log(verifyTransaction(req.body))
+        if (verifyTransaction(req.body)) {
+
+        }
+        res.send(JSON.stringify('Hello there'))
+    })
+
     app.listen(port)
 }
 //==============HTTP=API===============//
