@@ -1,3 +1,5 @@
+[![Tests](https://github.com/Gusarich/Plov/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Gusarich/Plov/actions/workflows/tests.yml)
+
 # Plov
 
 ## Table of contents
