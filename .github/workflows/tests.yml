@@ -20,4 +20,4 @@ jobs:
 
       - name: execute python script
         working-directory: ./node/tests
-        run: python node/tests/test.py
+        run: python test.py
