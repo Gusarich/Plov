@@ -1,5 +1,6 @@
-import lib
 from time import sleep
+from sys import exit
+import lib
 
 
 COLORS = {
@@ -44,4 +45,4 @@ print(f'Total {passed_tests}/{total_tests}' + COLORS['clear'])
 
 for process in lib.processes:
     process.kill()
-exit()
+exit(passed_tests != total_tests)
