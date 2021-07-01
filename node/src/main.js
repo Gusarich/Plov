@@ -34,18 +34,16 @@ function getBlockHash (block) {
 function getBlockString (block) {
     let transactionsString = ''
     for (let i = 0; i < block.transactions.length; i += 1) transactionsString += block.transactions[i].hash
-    return block.index.toString() + block.previousHash + block.timestamp.toString() + transactionsString + block.producer
+    return block.index.toString() + block.timestamp.toString() + transactionsString + block.producer
 }
 
 function getBlockchainHeight () {
-    if (blockchain.length) return blockchain[blockchain.length - 1].index
-    else return -1
+    return blockchainState.block
 }
 
 class Block {
-    constructor (index, previousHash, transactions, keypair) {
+    constructor (index, transactions, keypair) {
         this.index = index
-        this.previousHash = previousHash
         this.timestamp = getCurrentTimestamp()
         this.transactions = transactions
         this.producer = exportUint8Array(keypair.publicKey)
@@ -55,10 +53,8 @@ class Block {
 }
 
 function createNewBlock (transactions, keypair) {
-    let previousBlock = blockchain[blockchain.length - 1]
     return new Block (
-        previousBlock.index + 1,
-        previousBlock.hash,
+        lastBlock.index + 1,
         transactions,
         keypair
     )
@@ -81,7 +77,7 @@ function broadcastTransaction (transaction) {
 }
 
 function pushBlock (block) {
-    blockchain.push(block)
+    lastBlock = block
     blockchainState.block = block.index
     transactionPool = transactionPool.filter(transaction => !block.transactions.includes(transaction))
 }
@@ -90,17 +86,9 @@ function verifyBlock (block) {
     for (let i = 0; i < block.transactions.length; i += 1) {
         if (!verifyTransaction(block.transactions[i])) return false
     }
-    return (block.index == blockchain[block.index - 1].index + 1) &&
-           (blockchain[block.index - 1].hash == block.previousHash) &&
+    return (block.index == lastBlock.index + 1) &&
            (block.hash == getBlockHash(block)) &&
            (verifySignature(block.hash, block.signature, importUint8Array(block.producer)))
-}
-
-function verifyChain () {
-    for (let i = 0; i < blockchain.length; i += 1) {
-        if (!verifyBlock(blockchain[i])) return false
-    }
-    return true
 }
 
 function generateKeyPair () {
@@ -123,7 +111,7 @@ function verifyTransaction (transaction) {
            (transaction.amount <= blockchainState.accounts[transaction.fromPublicKey].balance)
 }
 
-var blockchain = []
+var lastBlock
 var blockchainState = {
     block: 0,
     accounts: {}
@@ -142,7 +130,6 @@ function initHTTPServer (port) {
     app.use(bodyParser.urlencoded({extended: true}))
 
     app.get('/getBlockchainHeight', (req, res) => res.send(JSON.stringify(getBlockchainHeight())))
-    app.get('/getBlock', (req, res) => res.send(JSON.stringify(blockchain[req.query.index])))
     app.get('/getPeers', (req, res) => res.send(JSON.stringify(getPeers())))
 
     app.post('/sendTx', (req, res) => {
