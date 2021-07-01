@@ -17,6 +17,18 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
+      
+      - name: setup node
+        uses: actions/setup-node@v2.1.5
+      
+      - name: install packages
+        run: |
+          npm i bignumber.js
+          npm i tweetnacl
+          npm i tweetnacl-util
+          npm i express
+          npm i body-parser
+          npm i ws
 
       - name: execute python script
         working-directory: ./node/tests
