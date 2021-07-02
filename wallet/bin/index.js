@@ -23,8 +23,17 @@ const options = yargs
         yargs.demandOption(['node', 'account'])
         utils.balance(yargs.argv.account, yargs.argv.node)
     })
+    .command('transfer', 'Transfer Plov to another account', yargs => {
+        argv = yargs
+            .usage('Usage: node transfer <amount> <recipient> [options]')
+            .demandOption(['node', 'account'])
+            .argv
+        if (argv._[2] == null) utils.help('plov keypair')
+        utils.transfer(argv._[1], argv._[2], argv.node, argv.account)
+    })
     .nargs('node', 1)
     .describe('node', 'Remote node address')
+    .describe('account', 'Public key / Secret key / Keypair filename')
     .help(true)
     .version(false)
 

@@ -65,6 +65,19 @@ function generateKeyPair () {
     })
 }
 
+function transfer (amount, recipient, node, account) {
+    if (account.length < 30) {
+        // Keypair filename
+        fs.readFile(path., 'utf8' , (err, data) => {
+            if (err) {
+                console.error(err)
+                return
+            }
+            console.log(data)
+        })
+    }
+}
+
 module.exports = {
     help: help,
     status: status,
