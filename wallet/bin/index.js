@@ -19,6 +19,10 @@ const options = yargs
             .argv
         if (argv._[1] == null) utils.help('plov keypair')
     })
+    .command('balance', 'Get balance of existing account', yargs => {
+        yargs.demandOption(['node', 'account'])
+        utils.balance(yargs.argv.account, yargs.argv.node)
+    })
     .nargs('node', 1)
     .describe('node', 'Remote node address')
     .help(true)

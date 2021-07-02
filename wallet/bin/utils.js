@@ -24,6 +24,19 @@ function status (node) {
         })
 }
 
+function balance (account, node) {
+    fetch(node + '/getAccount?account=' + account)
+        .then(res => res.json())
+        .then(json => {
+            if (json.ok) {
+                console.log(json.data.balance)
+            }
+            else {
+                console.log('Error!')
+            }
+        })
+}
+
 function generateKeyPair () {
     fs.mkdir(path.join(homedir, '.plov'), err => {
         if (err && err.errno != -17) return console.error(err)
@@ -55,5 +68,6 @@ function generateKeyPair () {
 module.exports = {
     help: help,
     status: status,
+    balance: balance,
     generateKeyPair: generateKeyPair
 }
