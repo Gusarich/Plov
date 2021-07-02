@@ -21,7 +21,7 @@ jobs:
       - name: setup node
         uses: actions/setup-node@v2.1.5
       
-      - name: install packages
+      - name: install node packages
         run: |
           npm i bignumber.js
           npm i tweetnacl
@@ -29,6 +29,10 @@ jobs:
           npm i express
           npm i body-parser
           npm i ws
+      
+      - name: install python packages
+        run: |
+          pip install requests
 
       - name: execute python script
         working-directory: ./node/tests
