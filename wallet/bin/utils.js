@@ -1,15 +1,31 @@
-var http = require('http')
+const fetch = require('node-fetch')
+const fs = require('fs')
+const path = require('path')
+const homedir = require('os').homedir()
 
 function help () {
     console.log('Use "plov --help" to get more information.')
 }
 
 function status (node) {
-    http.request(options, (res) => {
-        res.on('data', () => )
-    }).end()
-    console.log(`Current time: 123
-Last block: 321`)
+    fetch(node + '/getBlockchainHeight')
+        .then(res => res.json())
+        .then(json => {
+            if (json.ok) {
+                console.log('Current block:', json.data)
+                console.log('Current timestamp:', json.timestamp)
+            }
+            else {
+                console.log('Error!')
+            }
+        })
+}
+
+function generateKeyPair () {
+    fs.mkdir(path.join(homedir, '.plov'), (err) => {
+        if (err) return console.error(err)
+        console.log('Directory created successfully!')
+    })
 }
 
 module.exports = {
