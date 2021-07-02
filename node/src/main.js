@@ -34,18 +34,12 @@ function getBlockHash (block) {
 function getBlockString (block) {
     let transactionsString = ''
     for (let i = 0; i < block.transactions.length; i += 1) transactionsString += block.transactions[i].hash
-    return block.index.toString() + block.previousHash + block.timestamp.toString() + transactionsString + block.producer
-}
-
-function getBlockchainHeight () {
-    if (blockchain.length) return blockchain[blockchain.length - 1].index
-    else return -1
+    return block.index.toString() + block.timestamp.toString() + transactionsString + block.producer
 }
 
 class Block {
-    constructor (index, previousHash, transactions, keypair) {
+    constructor (index, transactions, keypair) {
         this.index = index
-        this.previousHash = previousHash
         this.timestamp = getCurrentTimestamp()
         this.transactions = transactions
         this.producer = exportUint8Array(keypair.publicKey)
@@ -55,10 +49,8 @@ class Block {
 }
 
 function createNewBlock (transactions, keypair) {
-    let previousBlock = blockchain[blockchain.length - 1]
     return new Block (
-        previousBlock.index + 1,
-        previousBlock.hash,
+        blockchainState.height,
         transactions,
         keypair
     )
@@ -81,26 +73,23 @@ function broadcastTransaction (transaction) {
 }
 
 function pushBlock (block) {
-    blockchain.push(block)
-    blockchainState.block = block.index
+    lastBlock = block
+    blockchainState.height = block.index + 1
     transactionPool = transactionPool.filter(transaction => !block.transactions.includes(transaction))
 }
 
 function verifyBlock (block) {
-    for (let i = 0; i < block.transactions.length; i += 1) {
-        if (!verifyTransaction(block.transactions[i])) return false
+    try {
+        for (let i = 0; i < block.transactions.length; i += 1) {
+            if (!verifyTransaction(block.transactions[i])) return false
+        }
+        return (block.index == blockchainState.height) &&
+               (block.hash == getBlockHash(block)) &&
+               (verifySignature(block.hash, block.signature, importUint8Array(block.producer)))
     }
-    return (block.index == blockchain[block.index - 1].index + 1) &&
-           (blockchain[block.index - 1].hash == block.previousHash) &&
-           (block.hash == getBlockHash(block)) &&
-           (verifySignature(block.hash, block.signature, importUint8Array(block.producer)))
-}
-
-function verifyChain () {
-    for (let i = 0; i < blockchain.length; i += 1) {
-        if (!verifyBlock(blockchain[i])) return false
+    catch {
+        return false
     }
-    return true
 }
 
 function generateKeyPair () {
@@ -112,20 +101,30 @@ function signMessage (message, secretKey) {
 }
 
 function verifySignature (message, signature, publicKey) {
-    return nacl.sign.detached.verify(decodeUTF8(message), importUint8Array(signature), publicKey)
+    try {
+        return nacl.sign.detached.verify(decodeUTF8(message), importUint8Array(signature), publicKey)
+    }
+    catch {
+        return false
+    }
 }
 
 function verifyTransaction (transaction) {
-    return (transaction.fromPublicKey in blockchainState.accounts) &&
-           (transaction.nonce == blockchainState.accounts[transaction.fromPublicKey].nonce + 1) &&
-           (transaction.hash == getTransactionHash(transaction)) &&
-           (verifySignature(transaction.hash, transaction.signature, importUint8Array(transaction.fromPublicKey))) &&
-           (transaction.amount <= blockchainState.accounts[transaction.fromPublicKey].balance)
+    try {
+        return (transaction.fromPublicKey in blockchainState.accounts) &&
+               (transaction.nonce == blockchainState.accounts[transaction.fromPublicKey].nonce + 1) &&
+               (transaction.hash == getTransactionHash(transaction)) &&
+               (verifySignature(transaction.hash, transaction.signature, importUint8Array(transaction.fromPublicKey))) &&
+               (transaction.amount <= blockchainState.accounts[transaction.fromPublicKey].balance)
+    }
+    catch {
+        return false
+    }
 }
 
-var blockchain = []
+var lastBlock
 var blockchainState = {
-    block: 0,
+    height: 0,
     accounts: {}
 }
 var transactionPool = []
@@ -136,21 +135,41 @@ var transactionPool = []
 const express = require('express')
 const bodyParser = require('body-parser')
 
+function httpResponse(ok, data) {
+    let response = {
+        ok: ok,
+        timestamp: getCurrentTimestamp()
+    }
+    if (data == undefined) return JSON.stringify(response)
+    response.data = data
+    return JSON.stringify(response)
+}
+
 function initHTTPServer (port) {
     var app = express()
     app.use(bodyParser.json())
     app.use(bodyParser.urlencoded({extended: true}))
 
-    app.get('/getBlockchainHeight', (req, res) => res.send(JSON.stringify(getBlockchainHeight())))
-    app.get('/getBlock', (req, res) => res.send(JSON.stringify(blockchain[req.query.index])))
-    app.get('/getPeers', (req, res) => res.send(JSON.stringify(getPeers())))
+    app.get('/getBlockchainHeight', (req, res) => res.send(httpResponse(true, blockchainState.height)))
+    app.get('/getPeers', (req, res) => res.send(httpResponse(true, getPeers())))
+    app.get('/getAccount', (req, res) => {
+        if (!req.query.account) res.send(httpResponse(false))
+        else {
+            let account = blockchainState.accounts[req.query.account]
+            if (account) res.send(httpResponse(true, account))
+            else res.send(httpResponse(true, {
+                balance: 0,
+                nonce: 0
+            }))
+        }
+    })
 
     app.post('/sendTx', (req, res) => {
         console.log(verifyTransaction(req.body))
         if (verifyTransaction(req.body)) {
-
+            res.send(httpResponse(true))
         }
-        res.send(JSON.stringify('Hello there'))
+        else res.send(httpResponse(false))
     })
 
     app.listen(port)
@@ -161,12 +180,12 @@ function initHTTPServer (port) {
 //============WebSocket=P2P============//
 const WebSocket = require('ws')
 const Actions = {
-    QUERY_BLOCKCHAIN_HEIGHT: 1,
-    QUERY_CHAIN: 2,
+    QUERY_BLOCKCHAIN_STATE: 1,
+    QUERY_LAST_BLOCK: 2,
     QUERY_PEERS: 3,
 
-    RESPONSE_BLOCKCHAIN_HEIGHT: 4,
-    RESPONSE_CHAIN: 5,
+    RESPONSE_BLOCKCHAIN_STATE: 4,
+    RESPONSE_LAST_BLOCK: 5,
     RESPONSE_PEERS: 6,
 
     BROADCAST_BLOCK: 7,
@@ -203,23 +222,23 @@ function initConnection (ws, client) {
 
     if (!client) {
         send(ws, {action: Actions.QUERY_PEERS})
-        send(ws, {action: Actions.QUERY_BLOCKCHAIN_HEIGHT})
+        send(ws, {action: Actions.QUERY_BLOCKCHAIN_STATE})
     }
 
     ws.on('message', (data) => {
         let message = JSON.parse(data)
         switch (message.action) {
-            case Actions.QUERY_BLOCKCHAIN_HEIGHT:
+            case Actions.QUERY_BLOCKCHAIN_STATE:
                 send(ws, {
-                    action: Actions.RESPONSE_BLOCKCHAIN_HEIGHT,
-                    data: getBlockchainHeight()
+                    action: Actions.RESPONSE_BLOCKCHAIN_STATE,
+                    data: blockchainState
                 })
                 break
 
-            case Actions.QUERY_CHAIN:
+            case Actions.QUERY_LAST_BLOCK:
                 send(ws, {
-                    action: Actions.RESPONSE_CHAIN,
-                    data: blockchain
+                    action: Actions.RESPONSE_LAST_BLOCK,
+                    data: lastBlock
                 })
                 break
 
@@ -230,13 +249,16 @@ function initConnection (ws, client) {
                 })
                 break
 
-            case Actions.RESPONSE_BLOCKCHAIN_HEIGHT:
-                if (message.data > getBlockchainHeight()) send(ws, {action: Actions.QUERY_CHAIN})
+            case Actions.RESPONSE_BLOCKCHAIN_STATE:
+                console.log(message.data, blockchainState)
+                if (message.data.height > blockchainState.height) {
+                    send(ws, {action: Actions.QUERY_LAST_BLOCK})
+                    blockchainState = message.data
+                }
                 break
 
-            case Actions.RESPONSE_CHAIN:
-                let chain = message.data
-                if (verifyChain(chain)) blockchain = chain
+            case Actions.RESPONSE_LAST_BLOCK:
+                if (verifyBlock(message.data)) lastBlock = message.data
                 break
 
             case Actions.RESPONSE_PEERS:
@@ -248,7 +270,7 @@ function initConnection (ws, client) {
                 break
 
             case Actions.BROADCAST_BLOCK:
-                if (message.data.index == getBlockchainHeight() + 1 && verifyBlock(message.data)) {
+                if (verifyBlock(message.data)) {
                     pushBlock(message.data)
                     broadcastBlock(message.data)
                 }
@@ -316,15 +338,15 @@ if (!isNaN(httpPort)) initHTTPServer(httpPort)
 if (firstConnection !== undefined) connectToPeer(firstConnection)
 
 if (genesis) {
-    pushBlock(new Block(0, '', [], keypair))
+    pushBlock(new Block(0, [], keypair))
     setInterval(() => {
         console.log('<<<<<<New block>>>>>>')
         let block = createNewBlock(transactionPool, keypair)
         pushBlock(block)
         broadcastBlock(block)
-    }, 3000)
+    }, 2000)
 }
 
 setInterval(() => {
-    console.log(blockchain.length)
+    console.log(blockchainState)
 }, 1000)

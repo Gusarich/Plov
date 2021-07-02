@@ -1,22 +1,31 @@
 #! /usr/bin/env node
 
-const yargs = require("yargs")
+const yargs = require('yargs')
 const utils = require('./utils.js')
 
-const usage = "Plov CLI\n\nUsage: plov [command] [options]"
 const options = yargs
-    .usage(usage)
+    .usage('Usage: plov <command> [options]')
+    .command('status', 'Get current blockchain status', yargs => {
+        yargs.demandOption(['node'])
+        utils.status(yargs.argv.node)
+    })
+    .command('keypair', 'Keypair actions', yargs => {
+        argv = yargs
+            .usage('Usage: node account <command> [options]')
+            .command('generate', 'Generate a new keypair', yargs => {
+                utils.generateKeyPair()
+            })
+            .help(true)
+            .argv
+        if (argv._[1] == null) utils.help('plov keypair')
+    })
+    .command('balance', 'Get balance of existing account', yargs => {
+        yargs.demandOption(['node', 'account'])
+        utils.balance(yargs.argv.account, yargs.argv.node)
+    })
+    .nargs('node', 1)
+    .describe('node', 'Remote node address')
     .help(true)
-    .argv
+    .version(false)
 
-const node = yargs.argv.node
-
-if (yargs.argv._[0] == null) {
-    utils.help()
-}
-
-const command = yargs.argv._[0]
-
-if (command == 'status') {
-    utils.status(node)
-}
+if (yargs.argv._[0] == null) utils.help('plov')
