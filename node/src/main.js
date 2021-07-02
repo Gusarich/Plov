@@ -109,6 +109,14 @@ function verifySignature (message, signature, publicKey) {
     }
 }
 
+function getTransactionHash (transaction) {
+    return exportUint8Array(nacl.hash(decodeUTF8(getTransactionString(transaction))))
+}
+
+function getTransactionString (transaction) {
+    return transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toString() + transaction.nonce.toString
+}
+
 function verifyTransaction (transaction) {
     try {
         return (transaction.fromPublicKey in blockchainState.accounts) &&
@@ -125,7 +133,12 @@ function verifyTransaction (transaction) {
 var lastBlock
 var blockchainState = {
     height: 0,
-    accounts: {}
+    accounts: {
+        '9nh9cw98fwkdwupzcw6kmnlqvesbxwh56azgan58ryjbfqk53': {
+            nonce: 0,
+            balance: 20
+        }
+    }
 }
 var transactionPool = []
 //=============Blockchain==============//
@@ -165,6 +178,7 @@ function initHTTPServer (port) {
     })
 
     app.post('/sendTx', (req, res) => {
+        console.log(req.body)
         console.log(verifyTransaction(req.body))
         if (verifyTransaction(req.body)) {
             res.send(httpResponse(true))
