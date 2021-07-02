@@ -9,9 +9,19 @@ const options = yargs
         yargs.demandOption(['node'])
         utils.status(yargs.argv.node)
     })
+    .command('keypair', 'Keypair actions', yargs => {
+        argv = yargs
+            .usage('Usage: node account <command> [options]')
+            .command('generate', 'Generate a new keypair', yargs => {
+                utils.generateKeyPair()
+            })
+            .help(true)
+            .argv
+        if (argv._[1] == null) utils.help('plov keypair')
+    })
     .nargs('node', 1)
     .describe('node', 'Remote node address')
     .help(true)
     .version(false)
 
-if (yargs.argv._[0] == null) utils.help()
+if (yargs.argv._[0] == null) utils.help('plov')
