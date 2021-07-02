@@ -152,6 +152,17 @@ function initHTTPServer (port) {
 
     app.get('/getBlockchainHeight', (req, res) => res.send(httpResponse(true, blockchainState.height)))
     app.get('/getPeers', (req, res) => res.send(httpResponse(true, getPeers())))
+    app.get('/getAccount', (req, res) => {
+        if (!req.query.account) res.send(httpResponse(false))
+        else {
+            let account = blockchainState.accounts[req.query.account]
+            if (account) res.send(httpResponse(true, account))
+            else res.send(httpResponse(true, {
+                balance: 0,
+                nonce: 0
+            }))
+        }
+    })
 
     app.post('/sendTx', (req, res) => {
         console.log(verifyTransaction(req.body))
