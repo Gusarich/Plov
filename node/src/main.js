@@ -135,20 +135,30 @@ var transactionPool = []
 const express = require('express')
 const bodyParser = require('body-parser')
 
+function httpResponse(ok, data) {
+    let response = {
+        ok: ok,
+        timestamp: getCurrentTimestamp()
+    }
+    if (data == undefined) return JSON.stringify(response)
+    response.data = data
+    return JSON.stringify(response)
+}
+
 function initHTTPServer (port) {
     var app = express()
     app.use(bodyParser.json())
     app.use(bodyParser.urlencoded({extended: true}))
 
-    app.get('/getBlockchainHeight', (req, res) => res.send(JSON.stringify(blockchainState.height())))
-    app.get('/getPeers', (req, res) => res.send(JSON.stringify(getPeers())))
+    app.get('/getBlockchainHeight', (req, res) => res.send(httpResponse(true, blockchainState.height)))
+    app.get('/getPeers', (req, res) => res.send(httpResponse(true, getPeers())))
 
     app.post('/sendTx', (req, res) => {
         console.log(verifyTransaction(req.body))
         if (verifyTransaction(req.body)) {
-
+            res.send(httpResponse(true))
         }
-        res.send(JSON.stringify('Hello there'))
+        else res.send(httpResponse(false))
     })
 
     app.listen(port)
