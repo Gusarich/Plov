@@ -151,7 +151,7 @@ var blockchainState = {
     accounts: {
         '9nh9cw98fwkdwupzcw6kmnlqvesbxwh56azgan58ryjbfqk53': {
             nonce: 0,
-            balance: new BigNumber(22.4)
+            balance: new BigNumber('1000')
         }
     }
 }

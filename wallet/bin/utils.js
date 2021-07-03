@@ -66,30 +66,43 @@ function balance (account, node) {
         })
 }
 
-function generateKeyPair () {
-    fs.mkdir(path.join(homedir, '.plov'), err => {
-        if (err && err.errno != -17) return console.error(err)
-        // .plov Directory created
+function generateKeyPair (filePath) {
+    if (!filePath) {
+        fs.mkdir(path.join(homedir, '.plov'), err => {
+            if (err && err.errno != -17) return console.error(err)
+            // .plov Directory created
+            let hex
+            let keypair = nacl.sign.keyPair()
+            let publicKey = exportUint8Array(keypair.publicKey)
+            let secretKey = exportUint8Array(keypair.secretKey)
+
+            fs.readdir(path.join(homedir, '.plov'), (err, files) => {
+                let index = 0
+                files.forEach(file => {
+                    if (file.startsWith('keypair')) {
+                        let num = parseInt(file.slice(7))
+                        if (num > index) index = num
+                    }
+                })
+                index += 1
+                fs.writeFile(path.join(homedir, '.plov', 'keypair' + index.toString()), publicKey + '\n' + secretKey + '\n', err => {
+                    if (err) return console.error(err)
+                    console.log('Keypair generated!\nPublic key:\n' + publicKey)
+                })
+            })
+        })
+    }
+    else {
         let hex
         let keypair = nacl.sign.keyPair()
         let publicKey = exportUint8Array(keypair.publicKey)
         let secretKey = exportUint8Array(keypair.secretKey)
 
-        fs.readdir(path.join(homedir, '.plov'), (err, files) => {
-            let index = 0
-            files.forEach(file => {
-                if (file.startsWith('keypair')) {
-                    let num = parseInt(file.slice(7))
-                    if (num > index) index = num
-                }
-            })
-            index += 1
-            fs.writeFile(path.join(homedir, '.plov', 'keypair' + index.toString()), publicKey + '\n' + secretKey + '\n', err => {
-                if (err) return console.error(err)
-                console.log('Keypair generated!')
-            })
+        fs.writeFile(filePath, publicKey + '\n' + secretKey + '\n', err => {
+            if (err) return console.error(err)
+            console.log('Keypair generated!\nPublic key:\n' + publicKey)
         })
-    })
+    }
 }
 
 function transfer (amount, recipient, node, account) {

@@ -14,7 +14,10 @@ const options = yargs
         argv = yargs
             .usage('Usage: node account <command> [options]')
             .command('generate', 'Generate a new keypair', yargs => {
-                utils.generateKeyPair()
+                argv = yargs
+                    .option('path')
+                    .argv
+                utils.generateKeyPair(argv.path)
             })
             .help(true)
             .argv
@@ -38,6 +41,7 @@ const options = yargs
     .nargs('node', 1)
     .describe('node', 'Remote node address')
     .describe('account', 'Public key / Secret key / Keypair filename')
+    .describe('path', 'Path to file')
     .help(true)
     .version(false)
 

@@ -3,7 +3,7 @@ import sys
 import threading
 
 
-CMD_PREFIX = 'node ../src/main.js '
+CMD_PREFIX = 'node ../node/src/main.js '
 process_index = 0
 status = []
 processes = []
@@ -29,3 +29,10 @@ def run_in_background(cmd, logging):
     prefix = f'\x1b[1;{29 + process_color};{48 - process_color}m[{process_index}]\x1b[0m '
     status.append(False)
     threading.Thread(target=_run_in_background, args=(cmd, prefix, process_index - 1, logging), daemon=True).start()
+
+
+def run_and_wait(cmd, logging):
+    output = subprocess.check_output(cmd, shell=True)
+    if logging:
+        print(output.decode())
+    return output.decode()
