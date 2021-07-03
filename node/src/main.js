@@ -148,12 +148,7 @@ function verifyTransaction (transaction) {
 var lastBlock
 var blockchainState = {
     height: 0,
-    accounts: {
-        '9nh9cw98fwkdwupzcw6kmnlqvesbxwh56azgan58ryjbfqk53': {
-            nonce: 0,
-            balance: new BigNumber('1000')
-        }
-    }
+    accounts: {}
 }
 var transactionPool = []
 //=============Blockchain==============//
@@ -367,6 +362,10 @@ if (!isNaN(httpPort)) initHTTPServer(httpPort)
 if (firstConnection !== undefined) connectToPeer(firstConnection)
 
 if (genesis) {
+    blockchainState.accounts[exportUint8Array(keypair.publicKey)] = {
+        nonce: 0,
+        balance: new BigNumber('1000')
+    }
     pushBlock(new Block(0, [], keypair))
     setInterval(() => {
         console.log('<<<<<<New block>>>>>>')
