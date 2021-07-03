@@ -35,5 +35,5 @@ jobs:
           pip install requests
 
       - name: execute python script
-        working-directory: ./node/tests
+        working-directory: ./tests
         run: python test.py
