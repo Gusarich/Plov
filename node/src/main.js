@@ -24,7 +24,7 @@ const nacl = require('tweetnacl')
 const decodeUTF8 = require('tweetnacl-util').decodeUTF8
 
 function getCurrentTimestamp () {
-    return Math.round(new Date().getTime() / 1000)
+    return Math.round(new Date().getTime())
 }
 
 function getBlockHash (block) {
@@ -35,6 +35,17 @@ function getBlockString (block) {
     let transactionsString = ''
     for (let i = 0; i < block.transactions.length; i += 1) transactionsString += block.transactions[i].hash
     return block.index.toString() + block.timestamp.toString() + transactionsString + block.producer
+}
+
+function getNextProducer () {
+    if (blockchainState.height < 1 || !lastBlock) return false
+    let lastBlockHash = new BigNumber(lastBlock.hash, 36)
+    let currentSlot = lastBlock.index + Math.floor((getCurrentTimestamp() - lastBlock.timestamp) / BLOCK_TIME)
+
+    // Not sure about RNG...
+    let randomNumber = lastBlockHash.times(currentSlot).plus(lastBlock.timestamp)
+
+    return randomNumber
 }
 
 class Block {
@@ -91,7 +102,9 @@ function pushBlock (block) {
 }
 
 function verifyBlock (block) {
+    getNextProducer()
     try {
+        //let waited_producer = getNextProducer()
         for (let i = 0; i < block.transactions.length; i += 1) {
             if (!verifyTransaction(block.transactions[i])) return false
         }
@@ -151,6 +164,7 @@ var blockchainState = {
     accounts: {}
 }
 var transactionPool = []
+const BLOCK_TIME = 1000 // Block time, ms
 //=============Blockchain==============//
 
 
@@ -372,7 +386,7 @@ if (genesis) {
         let block = createNewBlock(transactionPool, keypair)
         pushBlock(block)
         broadcastBlock(block)
-    }, 2000)
+    }, BLOCK_TIME + 1200)
 }
 
 setInterval(() => {
