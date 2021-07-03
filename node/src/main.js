@@ -86,6 +86,7 @@ function pushBlock (block) {
             }
         }
         blockchainState.accounts[tx.toPublicKey].balance = blockchainState.accounts[tx.toPublicKey].balance.plus(tx.amount)
+        blockchainState.accounts[tx.fromPublicKey].nonce += 1
     }
 }
 
@@ -125,7 +126,7 @@ function getTransactionHash (transaction) {
 }
 
 function getTransactionString (transaction) {
-    return transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toString() + transaction.nonce.toString
+    return transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toFixed(12, 1) + transaction.nonce.toString()
 }
 
 function verifyTransaction (transaction) {
@@ -136,6 +137,7 @@ function verifyTransaction (transaction) {
                (transaction.hash == getTransactionHash(transaction)) &&
                (verifySignature(transaction.hash, transaction.signature, importUint8Array(transaction.fromPublicKey))) &&
                (transaction.amount.gte(0)) &&
+               (transaction.amount.dp() <= 12) &&
                (transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].balance))
     }
     catch {
@@ -191,6 +193,7 @@ function initHTTPServer (port) {
     })
 
     app.post('/sendTx', (req, res) => {
+        console.log(req.body)
         if (verifyTransaction(req.body)) {
             transactionPool.push(req.body)
             broadcastTransaction(req.body)

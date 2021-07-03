@@ -32,9 +32,8 @@ function getTransactionHash (transaction) {
 }
 
 function getTransactionString (transaction) {
-    return transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toString() + transaction.nonce.toString
+    return transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toFixed(12, 1) + transaction.nonce.toString()
 }
-
 
 function help (command) {
     console.log('Use "' + command + ' --help" to get more information.')
@@ -103,30 +102,43 @@ function transfer (amount, recipient, node, account) {
             }
             publicKey = data.split('\n')[0]
             secretKey = importUint8Array(data.split('\n')[1])
+            amount = new BigNumber(amount)
 
-            let transaction = {
-                fromPublicKey: publicKey,
-                toPublicKey: recipient,
-                amount: amount,
-                nonce: 1 // TODO
-            }
-            transaction.hash = getTransactionHash(transaction)
-            transaction.signature = signMessage(transaction.hash, secretKey)
+            fetch(node + '/getAccount?account=' + publicKey)
+                .then(res => res.json())
+                .then(json => {
+                    if (json.ok) {
+                        nonce = json.data.nonce + 1
+                        let transaction = {
+                            fromPublicKey: publicKey,
+                            toPublicKey: recipient,
+                            amount: amount,
+                            nonce: nonce
+                        }
+                        transaction.hash = getTransactionHash(transaction)
+                        transaction.signature = signMessage(transaction.hash, secretKey)
 
-            fetch(node + '/sendTx', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(transaction)
-            })
-              .then(res => res.json())
-              .then(json => {
-                  if (json.ok) {
-                      console.log(json.data)
-                  }
-                  else {
-                      console.log('Error!')
-                  }
-              })
+                        fetch(node + '/sendTx', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(transaction)
+                        })
+                          .then(res => res.json())
+                          .then(json => {
+                              console.log(transaction)
+                              console.log(json)
+                              if (json.ok) {
+                                  console.log(json.data)
+                              }
+                              else {
+                                  console.log('Error!')
+                              }
+                          })
+                    }
+                    else {
+                        console.log('Error!')
+                    }
+                })
         })
     }
 }

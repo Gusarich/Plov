@@ -4,6 +4,7 @@ const yargs = require('yargs')
 const utils = require('./utils.js')
 
 const options = yargs
+    .parserConfiguration({'parse-positional-numbers': false})
     .usage('Usage: plov <command> [options]')
     .command('status', 'Get current blockchain status', yargs => {
         yargs.demandOption(['node'])
@@ -26,10 +27,13 @@ const options = yargs
     .command('transfer', 'Transfer Plov to another account', yargs => {
         argv = yargs
             .usage('Usage: node transfer <amount> <recipient> [options]')
+            .positional('amount', {type: 'string'})
+            .positional('recipient', {type: 'string'})
             .demandOption(['node', 'account'])
             .argv
-        if (argv._[2] == null) utils.help('plov keypair')
-        utils.transfer(argv._[1], argv._[2], argv.node, argv.account)
+        console.log(argv)
+        if (argv._[2] == null) utils.help('plov transfer')
+        else utils.transfer(argv._[1], argv._[2], argv.node, argv.account)
     })
     .nargs('node', 1)
     .describe('node', 'Remote node address')
