@@ -76,6 +76,17 @@ function pushBlock (block) {
     lastBlock = block
     blockchainState.height = block.index + 1
     transactionPool = transactionPool.filter(transaction => !block.transactions.includes(transaction))
+    for (let i = 0; i < block.transactions.length; i += 1) {
+        let tx = block.transactions[i]
+        blockchainState.accounts[tx.fromPublicKey].balance = blockchainState.accounts[tx.fromPublicKey].balance.minus(tx.amount)
+        if (!(tx.toPublicKey in blockchainState.accounts)) {
+            blockchainState.accounts[tx.toPublicKey] = {
+                nonce: 0,
+                balance: new BigNumber(0)
+            }
+        }
+        blockchainState.accounts[tx.toPublicKey].balance = blockchainState.accounts[tx.toPublicKey].balance.plus(tx.amount)
+    }
 }
 
 function verifyBlock (block) {
@@ -118,12 +129,14 @@ function getTransactionString (transaction) {
 }
 
 function verifyTransaction (transaction) {
+    transaction.amount = new BigNumber(transaction.amount)
     try {
         return (transaction.fromPublicKey in blockchainState.accounts) &&
                (transaction.nonce == blockchainState.accounts[transaction.fromPublicKey].nonce + 1) &&
                (transaction.hash == getTransactionHash(transaction)) &&
                (verifySignature(transaction.hash, transaction.signature, importUint8Array(transaction.fromPublicKey))) &&
-               (transaction.amount <= blockchainState.accounts[transaction.fromPublicKey].balance)
+               (transaction.amount.gte(0)) &&
+               (transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].balance))
     }
     catch {
         return false
@@ -136,7 +149,7 @@ var blockchainState = {
     accounts: {
         '9nh9cw98fwkdwupzcw6kmnlqvesbxwh56azgan58ryjbfqk53': {
             nonce: 0,
-            balance: 20
+            balance: new BigNumber(22.4)
         }
     }
 }
@@ -178,9 +191,9 @@ function initHTTPServer (port) {
     })
 
     app.post('/sendTx', (req, res) => {
-        console.log(req.body)
-        console.log(verifyTransaction(req.body))
         if (verifyTransaction(req.body)) {
+            transactionPool.push(req.body)
+            broadcastTransaction(req.body)
             res.send(httpResponse(true))
         }
         else res.send(httpResponse(false))
@@ -264,7 +277,6 @@ function initConnection (ws, client) {
                 break
 
             case Actions.RESPONSE_BLOCKCHAIN_STATE:
-                console.log(message.data, blockchainState)
                 if (message.data.height > blockchainState.height) {
                     send(ws, {action: Actions.QUERY_LAST_BLOCK})
                     blockchainState = message.data
@@ -362,5 +374,10 @@ if (genesis) {
 }
 
 setInterval(() => {
-    console.log(blockchainState)
+    console.log('==============')
+    let s = blockchainState.accounts
+    for (let i in s) {
+        console.log(i, '=>', s[i].balance.toString())
+    }
+    console.log('==============')
 }, 1000)
