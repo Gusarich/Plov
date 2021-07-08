@@ -23,6 +23,9 @@ function importUint8Array (string) {
 const nacl = require('tweetnacl')
 const decodeUTF8 = require('tweetnacl-util').decodeUTF8
 
+const ZERO = new BigNumber('0')
+const BURN_MULTIPLIER = new BigNumber('2')
+
 function getCurrentTimestamp () {
     return Math.round(new Date().getTime())
 }
@@ -83,6 +86,14 @@ function broadcastTransaction (transaction) {
     broadcast(message)
 }
 
+function getTotalAllocated () {
+    let total = ZERO
+    for (let i = 0; i < blockchainState.accounts.length; i += 1) {
+        total += BURN_MULTIPLIER.times(blockchainState.accounts[i].burned).plus(blockchainState.accounts[i].staked)
+    }
+    return total
+}
+
 function pushBlock (block) {
     lastBlock = block
     blockchainState.height = block.index + 1
@@ -93,16 +104,22 @@ function pushBlock (block) {
         if (!(tx.toPublicKey in blockchainState.accounts)) {
             blockchainState.accounts[tx.toPublicKey] = {
                 nonce: 0,
-                balance: new BigNumber(0)
+                balance: ZERO,
+                staked: ZERO,
+                burned: ZERO
             }
         }
         blockchainState.accounts[tx.toPublicKey].balance = blockchainState.accounts[tx.toPublicKey].balance.plus(tx.amount)
         blockchainState.accounts[tx.fromPublicKey].nonce += 1
+
+        // Burning
+        if (tx.toPublicKey == 'burn') {
+            blockchainState.accounts[tx.fromPublicKey].burned = blockchainState.accounts[tx.fromPublicKey].burned.plus(tx.amount)
+        }
     }
 }
 
 function verifyBlock (block) {
-    getNextProducer()
     try {
         //let waited_producer = getNextProducer()
         for (let i = 0; i < block.transactions.length; i += 1) {
@@ -195,8 +212,10 @@ function initHTTPServer (port) {
             let account = blockchainState.accounts[req.query.account]
             if (account) res.send(httpResponse(true, account))
             else res.send(httpResponse(true, {
+                nonce: 0,
                 balance: 0,
-                nonce: 0
+                staked: 0,
+                burned: 0
             }))
         }
     })
@@ -378,7 +397,9 @@ if (firstConnection !== undefined) connectToPeer(firstConnection)
 if (genesis) {
     blockchainState.accounts[exportUint8Array(keypair.publicKey)] = {
         nonce: 0,
-        balance: new BigNumber('1000')
+        balance: new BigNumber('1000'),
+        staked: ZERO,
+        burned: ZERO
     }
     pushBlock(new Block(0, [], keypair))
     setInterval(() => {
