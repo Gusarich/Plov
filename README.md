@@ -54,7 +54,9 @@ Keypair actions
 Generates new keypair and stores secret key to ~/.plov directory.
 ```
 $ plov keypair generate
-Generated keypair (/home/.plov/keypair1)
+Keypair generated (keypair1)
+Public key:
+9nh9cw98fwkdwupzcw6kmnlqvesbxwh56azgan58ryjbfqk53
 ```
 
 #### balance
@@ -68,7 +70,9 @@ $ plov balance --account 9nh9cw98fwkdwupzcw6kmnlqvesbxwh56azgan58ryjbfqk53
 Transfer Plov to another account.
 ```
 $ plov keypair generate
-Generated keypair (/home/.plov/keypair1)
+Keypair generated (keypair1)
+Public key:
+9nh9cw98fwkdwupzcw6kmnlqvesbxwh56azgan58ryjbfqk53
 $ plov balance --account keypair1
 107.24
 $ plov transfer 10 fqeok9qo5c7qum1ypm3omyjrje8uvxbtbs1yrk4h9h67lbp3cf --account keypair1
