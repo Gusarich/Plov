@@ -35,6 +35,12 @@ function getTransactionString (transaction) {
     return transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toFixed(12, 1) + transaction.nonce.toString()
 }
 
+function getKeypairFilePath (keypair) {
+    let filePath = path.join(homedir, '.plov', keypair)
+    if (!fs.existsSync(filePath) && fs.existsSync(keypair)) filePath = keypair
+    return filePath
+}
+
 function help (command) {
     console.log('Use "' + command + ' --help" to get more information.')
 }
@@ -85,9 +91,10 @@ function generateKeyPair (filePath) {
                     }
                 })
                 index += 1
-                fs.writeFile(path.join(homedir, '.plov', 'keypair' + index.toString()), publicKey + '\n' + secretKey + '\n', err => {
+                filePath = path.join(homedir, '.plov', 'keypair' + index.toString())
+                fs.writeFile(filePath, publicKey + '\n' + secretKey + '\n', err => {
                     if (err) return console.error(err)
-                    console.log('Keypair generated!\nPublic key:\n' + publicKey)
+                    console.log('Keypair generated! (keypair' + index.toString() + ')\nPublic key:\n' + publicKey)
                 })
             })
         })
@@ -100,60 +107,50 @@ function generateKeyPair (filePath) {
 
         fs.writeFile(filePath, publicKey + '\n' + secretKey + '\n', err => {
             if (err) return console.error(err)
-            console.log('Keypair generated!\nPublic key:\n' + publicKey)
+            console.log('Keypair generated! (' + filePath + ')\nPublic key:\n' + publicKey)
         })
     }
 }
 
 function transfer (amount, recipient, node, account) {
-    if (account.length < 50) {
-        // Keypair filename
-        fs.readFile(path.join(homedir, '.plov', account), 'utf8' , (err, data) => {
-            if (err) {
-                console.error(err)
-                return
-            }
-            publicKey = data.split('\n')[0]
-            secretKey = importUint8Array(data.split('\n')[1])
-            amount = new BigNumber(amount)
+    let data = fs.readFileSync(getKeypairFilePath(account), 'utf8')
+    publicKey = data.split('\n')[0]
+    secretKey = importUint8Array(data.split('\n')[1])
+    amount = new BigNumber(amount)
 
-            fetch(node + '/getAccount?account=' + publicKey)
-                .then(res => res.json())
-                .then(json => {
-                    if (json.ok) {
-                        nonce = json.data.nonce + 1
-                        let transaction = {
-                            fromPublicKey: publicKey,
-                            toPublicKey: recipient,
-                            amount: amount,
-                            nonce: nonce
-                        }
-                        transaction.hash = getTransactionHash(transaction)
-                        transaction.signature = signMessage(transaction.hash, secretKey)
+    fetch(node + '/getAccount?account=' + publicKey)
+        .then(res => res.json())
+        .then(json => {
+            if (json.ok) {
+                nonce = json.data.nonce + 1
+                let transaction = {
+                    fromPublicKey: publicKey,
+                    toPublicKey: recipient,
+                    amount: amount,
+                    nonce: nonce
+                }
+                transaction.hash = getTransactionHash(transaction)
+                transaction.signature = signMessage(transaction.hash, secretKey)
 
-                        fetch(node + '/sendTx', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify(transaction)
-                        })
-                          .then(res => res.json())
-                          .then(json => {
-                              console.log(transaction)
-                              console.log(json)
-                              if (json.ok) {
-                                  console.log(json.data)
-                              }
-                              else {
-                                  console.log('Error!')
-                              }
-                          })
-                    }
-                    else {
-                        console.log('Error!')
-                    }
+                fetch(node + '/sendTx', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(transaction)
                 })
+                  .then(res => res.json())
+                  .then(json => {
+                      if (json.ok) {
+                          console.log('Success!')
+                      }
+                      else {
+                          console.log('Error!')
+                      }
+                  })
+            }
+            else {
+                console.log('Error!')
+            }
         })
-    }
 }
 
 module.exports = {

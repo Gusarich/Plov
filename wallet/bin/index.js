@@ -34,7 +34,6 @@ const options = yargs
             .positional('recipient', {type: 'string'})
             .demandOption(['node', 'account'])
             .argv
-        console.log(argv)
         if (argv._[2] == null) utils.help('plov transfer')
         else utils.transfer(argv._[1], argv._[2], argv.node, argv.account)
     })
