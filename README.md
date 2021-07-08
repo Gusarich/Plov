@@ -19,18 +19,18 @@ Plov is next-gen Blockchain.
 ## Wallet
 ### Installation
 Use `npm` package manager to install
-```bash
+```
 npm install --global plov-wallet
 ```
 ### Usage
 Usage example:
-```bash
+```
 $ plov status
 Current time: 1622449597403
 Current block: 443016
 ```
 Use `--help` option to get more information
-```bash
+```
 plov --help
 ```
 ### Commands
@@ -42,7 +42,7 @@ plov --help
 
 #### status
 Prints current time and block from Plov network.
-```bash
+```
 $ plov status
 Current time: 1622449597403
 Current block: 443016
@@ -52,21 +52,21 @@ Current block: 443016
 Keypair actions
 ##### generate
 Generates new keypair and stores secret key to ~/.plov directory.
-```bash
+```
 $ plov keypair generate
-Keypair generated!
+Generated keypair (/home/.plov/keypair1)
 ```
 
 #### balance
 Get current balance of specific account.
-```bash
+```
 $ plov balance --account 9nh9cw98fwkdwupzcw6kmnlqvesbxwh56azgan58ryjbfqk53
 107.24
 ```
 
 #### transfer
 Transfer Plov to another account.
-```bash
+```
 $ plov keypair generate
 Generated keypair (/home/.plov/keypair1)
 $ plov balance --account keypair1
@@ -86,16 +86,16 @@ Plov-node npm package is in development right now. You can't use it yet.
 
 ### Installation
 Use `npm` package manager to install
-```bash
+```
 npm install --global plov-node
 ```
 ### Usage
 Usage example:
-```bash
+```
 $ plov-node sync
 Sync done
 ```
 Use `--help` option to get more information
-```bash
+```
 plov-node --help
 ```
