@@ -1,37 +1,80 @@
-## Welcome to GitHub Pages
+# Plov
+## Introduction
+todo
 
-You can use the [editor on GitHub](https://github.com/Gusarich/Plov/edit/main/docs/index.md) to maintain and preview the content for your website in Markdown files.
+## Background
+todo
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Structure
+### Node
+A node is a device that runs a program that creates and validates blocks in the network.
+This program connects to multiple peers, queries the current state of the network, and proceeds to process transactions.
+To be able to create blocks and receive rewards, you first need to stake or burn a certain amount of coins from the account that is linked to the node.
 
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+### State
+A state is an object that contains information necessary to keep the network running.
+State structure:
+```json
+blockchainState: {
+    height: <Current blockchain height>,
+    accounts: {
+        abc...01: {},
+        abc...02: {},
+        <All accounts that have ever interacted with the blockchain>
+    },
+    allocated: []
+}
 ```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Gusarich/Plov/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+#### Height
+`height` Variable stores current blockchan height.
+#### Accounts
+`accounts` Object stores all accounts that have ever interacted with the blockchain.
+#### Allocated
+todo
+### Transaction
+A transaction is an object that contains information that allows you to validate, process and write changes to state.
+Transaction structure:
+```json
+transaction: {
+    fromPublicKey: <Sender address>,
+    toPublicKey: <Recepient address>,
+    amount: <Amount of coins transfered>,
+    nonce: <Nonce of transaction>
+}
+```
+### Block
+A block is a unit of information in a blockchain. The block contains the current time, transactions, block producer. By dividing information into blocks, it is easier to maintain a general consensus in a decentralized network.
+Blocks are generated at equal intervals. All blocks are not saved on the node device, only the last one is saved and overwritten.
+Block structure:
+```json
+block: {
+    index: <Index of block, equal to blockchain height>,
+    timestamp: <Current timestamp>,
+    transactions: [
+        {...},
+        {...},
+        <All transactions in block>
+    ],
+    producer: <Block producer that gets reward>,
+    hash: <Block hash>,
+    signature: <Block signature taken from hash>
+}
+```
+### Account
+An account is an object that contains information about an address in the blockchain.
+Account structure:
+```json
+account: {
+    nonce: <Nonce of account>,
+    balance: <Amount of coins that account has>
+}
+```
+### Staking
+Staking is a mechanism that reduces the total circulating supply of coins on the network.
+While staking does not technically reduce inflation, it does exactly that effect.
+By staking a coin, an account gets the opportunity to produce blocks and receive a reward for it.
+The more coins an account has staked, the more chances it will have to produce the next block.
+Staked coins can be returned to the balance, but the ability to produce blocks disappears, or decreases if not all coins are withdrawn from the stake.
+### Burning
+Burning is a process that reduces inflation in the network. By burning coins, the account loses some of them, but gets the opportunity to produce blocks. At the same time, so that users have the motivation to burn tokens, and not stake, for burning the account gets more chances to produce a block. The multiplier is 2.
+That is, if account `abc...01` burned 100 coins, and account `abc...02` staked 200 coins, these accounts will have an equal chance of producing a block and receiving a reward.
