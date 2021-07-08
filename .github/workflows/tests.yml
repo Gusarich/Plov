@@ -29,6 +29,7 @@ jobs:
           npm i express
           npm i body-parser
           npm i ws
+          npm i -g wallet
 
       - name: install python packages
         run: |
@@ -36,4 +37,4 @@ jobs:
 
       - name: execute python script
         working-directory: ./tests
-        run: python test.py --nofile
+        run: python test.py
