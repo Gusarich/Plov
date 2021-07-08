@@ -105,6 +105,8 @@ function generateKeyPair (filePath) {
         let publicKey = exportUint8Array(keypair.publicKey)
         let secretKey = exportUint8Array(keypair.secretKey)
 
+        console.log(filePath)
+
         fs.writeFile(filePath, publicKey + '\n' + secretKey + '\n', err => {
             if (err) return console.error(err)
             console.log('Keypair generated! (' + filePath + ')\nPublic key:\n' + publicKey)

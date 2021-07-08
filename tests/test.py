@@ -13,6 +13,13 @@ def print_after_test(passed):
         print(COLORS['passed'] + 'Test passed ✔')
     else:
         print(COLORS['failed'] + 'Test failed ✘')
+        try:
+            shutil.rmtree('tmp')
+        except Exception as e:
+            print(e)
+        for process in lib.processes:
+            process.kill()
+        exit(passed_tests != total_tests)
     print(f'Total {passed_tests}/{total_tests}' + COLORS['clear'])
 
 
