@@ -97,7 +97,11 @@ function getTotalAllocated () {
 function pushBlock (block) {
     lastBlock = block
     blockchainState.height = block.index + 1
-    transactionPool = transactionPool.filter(transaction => !block.transactions.includes(transaction))
+
+    blockTransactionHashes = []
+    for (let i = 0; i < block.transactions.length; i += 1) blockTransactionHashes.push(block.transactions[i].hash)
+    transactionPool = transactionPool.filter(transaction => !blockTransactionHashes.includes(transaction.hash))
+
     for (let i = 0; i < block.transactions.length; i += 1) {
         let tx = block.transactions[i]
         blockchainState.accounts[tx.fromPublicKey].balance = blockchainState.accounts[tx.fromPublicKey].balance.minus(tx.amount)
@@ -138,6 +142,10 @@ function generateKeyPair () {
     return nacl.sign.keyPair()
 }
 
+function importKeyPair (secretKey) {
+    return nacl.sign.keyPair.fromSecretKey(importUint8Array(secretKey))
+}
+
 function signMessage (message, secretKey) {
     return exportUint8Array(nacl.sign.detached(decodeUTF8(message), secretKey))
 }
@@ -160,8 +168,8 @@ function getTransactionString (transaction) {
 }
 
 function verifyTransaction (transaction) {
-    transaction.amount = new BigNumber(transaction.amount)
     try {
+        transaction.amount = new BigNumber(transaction.amount)
         return (transaction.fromPublicKey in blockchainState.accounts) &&
                (transaction.nonce == blockchainState.accounts[transaction.fromPublicKey].nonce + 1) &&
                (transaction.hash == getTransactionHash(transaction)) &&
@@ -221,8 +229,13 @@ function initHTTPServer (port) {
     })
 
     app.post('/sendTx', (req, res) => {
-        console.log(req.body)
         if (verifyTransaction(req.body)) {
+            for (let i = 0; i < transactionPool.length; i += 1) {
+                if (transactionPool[i].hash == transaction.hash) {
+                    res.send(httpResponse(false))
+                    return
+                }
+            }
             transactionPool.push(req.body)
             broadcastTransaction(req.body)
             res.send(httpResponse(true))
@@ -311,6 +324,15 @@ function initConnection (ws, client) {
                 if (message.data.height > blockchainState.height) {
                     send(ws, {action: Actions.QUERY_LAST_BLOCK})
                     blockchainState = message.data
+                    for (let address in blockchainState.accounts) {
+                        let account = blockchainState.accounts[address]
+                        blockchainState.accounts[address] = {
+                            nonce: account.nonce,
+                            balance: new BigNumber(account.balance),
+                            staked: new BigNumber(account.staked),
+                            burned: new BigNumber(account.burned)
+                        }
+                    }
                 }
                 break
 
@@ -334,6 +356,9 @@ function initConnection (ws, client) {
 
             case Actions.BROADCAST_TRANSACTION:
                 if (verifyTransaction(message.data)) {
+                    for (let i = 0; i < transactionPool.length; i += 1) {
+                        if (transactionPool[i].hash == message.data.hash) return
+                    }
                     transactionPool.push(message.data)
                     broadcastTransaction(message.data)
                 }
@@ -363,13 +388,21 @@ setInterval(() => {
 }, 1000)
 //============WebSocket=P2P============//
 
+const fs = require('fs')
+const path = require('path')
+const homedir = require('os').homedir()
 
-const keypair = generateKeyPair()
+function readSecretKey (filePath_) {
+    let filePath = path.join(homedir, '.plov', filePath_)
+    if (!fs.existsSync(filePath) && fs.existsSync(filePath_)) filePath = filePath_
+    return fs.readFileSync(filePath, 'utf8').split('\n')[1]
+}
 
 var wsPort
 var httpPort
 var firstConnection
 var genesis
+var keypair
 
 for (let i = 0; i < process.argv.length - 1; i += 1) {
     if (process.argv[i] == '--ws-port') {
@@ -381,11 +414,16 @@ for (let i = 0; i < process.argv.length - 1; i += 1) {
     if (process.argv[i] == '--peer') {
         firstConnection = process.argv[i + 1]
     }
+    if (process.argv[i] == '--keypair') {
+        keypair = importKeyPair(readSecretKey(process.argv[i + 1]))
+    }
     if (process.argv[i] == '--genesis') {
         genesis = true
     }
 }
 if (process.argv[process.argv.length - 1] == '--genesis') genesis = true
+
+if (keypair == undefined) keypair = generateKeyPair()
 
 if (isNaN(wsPort)) process.exit(1)
 else initP2PServer(wsPort)
@@ -416,5 +454,6 @@ setInterval(() => {
     for (let i in s) {
         console.log(i, '=>', s[i].balance.toString())
     }
+    console.log(transactionPool.length)
     console.log('==============')
 }, 1000)
