@@ -14,7 +14,7 @@ To be able to create blocks and receive rewards, you first need to stake or burn
 ### State
 A state is an object that contains information necessary to keep the network running.
 State structure:
-```json
+```yaml
 blockchainState: {
     height: <Current blockchain height>,
     accounts: {
@@ -34,7 +34,7 @@ todo
 ### Transaction
 A transaction is an object that contains information that allows you to validate, process and write changes to state.
 Transaction structure:
-```json
+```yaml
 transaction: {
     fromPublicKey: <Sender address>,
     toPublicKey: <Recepient address>,
@@ -46,7 +46,7 @@ transaction: {
 A block is a unit of information in a blockchain. The block contains the current time, transactions, block producer. By dividing information into blocks, it is easier to maintain a general consensus in a decentralized network.
 Blocks are generated at equal intervals. All blocks are not saved on the node device, only the last one is saved and overwritten.
 Block structure:
-```json
+```yaml
 block: {
     index: <Index of block, equal to blockchain height>,
     timestamp: <Current timestamp>,
@@ -63,7 +63,7 @@ block: {
 ### Account
 An account is an object that contains information about an address in the blockchain.
 Account structure:
-```json
+```yaml
 account: {
     nonce: <Nonce of account>,
     balance: <Amount of coins that account has>
