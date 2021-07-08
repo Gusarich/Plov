@@ -415,7 +415,9 @@ for (let i = 0; i < process.argv.length - 1; i += 1) {
         firstConnection = process.argv[i + 1]
     }
     if (process.argv[i] == '--keypair') {
-        keypair = importKeyPair(readSecretKey(process.argv[i + 1]))
+        keypair = process.argv[i + 1]
+        if (fs.existsSync(keypair)) keypair = readSecretKey(keypair)
+        keypair = importKeyPair(keypair)
     }
     if (process.argv[i] == '--genesis') {
         genesis = true

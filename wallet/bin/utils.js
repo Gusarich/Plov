@@ -72,15 +72,20 @@ function balance (account, node) {
         })
 }
 
-function generateKeyPair (filePath) {
-    if (!filePath) {
+function generateKeyPair (filePath, noFile) {
+    let hex
+    let keypair = nacl.sign.keyPair()
+    let publicKey = exportUint8Array(keypair.publicKey)
+    let secretKey = exportUint8Array(keypair.secretKey)
+
+    if (noFile) {
+        console.log('Keypair generated!\nPublic key:\n' + publicKey + '\nSecret key:\n' + secretKey)
+    }
+
+    else if (!filePath) {
         fs.mkdir(path.join(homedir, '.plov'), err => {
             if (err && err.errno != -17) return console.error(err)
             // .plov Directory created
-            let hex
-            let keypair = nacl.sign.keyPair()
-            let publicKey = exportUint8Array(keypair.publicKey)
-            let secretKey = exportUint8Array(keypair.secretKey)
 
             fs.readdir(path.join(homedir, '.plov'), (err, files) => {
                 let index = 0
@@ -99,12 +104,8 @@ function generateKeyPair (filePath) {
             })
         })
     }
-    else {
-        let hex
-        let keypair = nacl.sign.keyPair()
-        let publicKey = exportUint8Array(keypair.publicKey)
-        let secretKey = exportUint8Array(keypair.secretKey)
 
+    else {
         fs.writeFile(filePath, publicKey + '\n' + secretKey + '\n', err => {
             if (err) return console.error(err)
             console.log('Keypair generated! (' + filePath + ')\nPublic key:\n' + publicKey)
@@ -113,9 +114,18 @@ function generateKeyPair (filePath) {
 }
 
 function transfer (amount, recipient, node, account) {
-    let data = fs.readFileSync(getKeypairFilePath(account), 'utf8')
-    publicKey = data.split('\n')[0]
-    secretKey = importUint8Array(data.split('\n')[1])
+    let publicKey, secretKey
+    if (fs.existsSync(account)) {
+        let data = fs.readFileSync(getKeypairFilePath(account), 'utf8')
+        publicKey = data.split('\n')[0]
+        secretKey = importUint8Array(data.split('\n')[1])
+    }
+    else {
+        secretKey = account
+        keypair = nacl.sign.keyPair.fromSecretKey(importUint8Array(secretKey))
+        secretKey = keypair.secretKey
+        publicKey = exportUint8Array(keypair.publicKey)
+    }
     amount = new BigNumber(amount)
 
     fetch(node + '/getAccount?account=' + publicKey)

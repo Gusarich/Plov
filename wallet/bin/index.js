@@ -16,8 +16,9 @@ const options = yargs
             .command('generate', 'Generate a new keypair', yargs => {
                 argv = yargs
                     .option('path')
+                    .option('nofile')
                     .argv
-                utils.generateKeyPair(argv.path)
+                utils.generateKeyPair(argv.path, argv.nofile)
             })
             .help(true)
             .argv
@@ -41,6 +42,7 @@ const options = yargs
     .describe('node', 'Remote node address')
     .describe('account', 'Public key / Secret key / Keypair filename')
     .describe('path', 'Path to file')
+    .describe('nofile', 'When used Plov does not writing anything to filesystem')
     .help(true)
     .version(false)
 
