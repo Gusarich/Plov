@@ -38,6 +38,24 @@ const options = yargs
         if (argv._[2] == null) utils.help('plov transfer')
         else utils.transfer(argv._[1], argv._[2], argv.node, argv.account)
     })
+    .command('stake', 'Stake Plov to selected account', yargs => {
+        argv = yargs
+            .usage('Usage: node stake <amount> [options]')
+            .positional('amount', {type: 'string'})
+            .demandOption(['node', 'account'])
+            .argv
+        if (argv._[1] == null) utils.help('plov stake')
+        else utils.stake(argv._[1], argv.node, argv.account)
+    })
+    .command('unstake', 'Unstake Plov from selected account', yargs => {
+        argv = yargs
+            .usage('Usage: node unstake <amount> [options]')
+            .positional('amount', {type: 'string'})
+            .demandOption(['node', 'account'])
+            .argv
+        if (argv._[1] == null) utils.help('plov unstake')
+        else utils.unstake(argv._[1], argv.node, argv.account)
+    })
     .nargs('node', 1)
     .describe('node', 'Remote node address')
     .describe('account', 'Public key / Secret key / Keypair filename')
