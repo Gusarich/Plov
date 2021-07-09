@@ -88,8 +88,8 @@ function broadcastTransaction (transaction) {
 
 function getTotalAllocated () {
     let total = ZERO
-    for (let i = 0; i < blockchainState.accounts.length; i += 1) {
-        total += BURN_MULTIPLIER.times(blockchainState.accounts[i].burned).plus(blockchainState.accounts[i].staked)
+    for (let account in blockchainState.accounts) {
+        total = total.plus(BURN_MULTIPLIER.times(blockchainState.accounts[account].burned).plus(blockchainState.accounts[account].staked))
     }
     return total
 }
@@ -97,6 +97,8 @@ function getTotalAllocated () {
 function pushBlock (block) {
     lastBlock = block
     blockchainState.height = block.index + 1
+
+    console.log('>>>', getTotalAllocated().toString())
 
     blockTransactionHashes = []
     for (let i = 0; i < block.transactions.length; i += 1) blockTransactionHashes.push(block.transactions[i].hash)
