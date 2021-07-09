@@ -32,7 +32,7 @@ function getTransactionHash (transaction) {
 }
 
 function getTransactionString (transaction) {
-    return transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toFixed(12, 1) + transaction.nonce.toString()
+    return transaction.action + transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toFixed(12, 1) + transaction.nonce.toString()
 }
 
 function getKeypairFilePath (keypair) {
@@ -134,6 +134,7 @@ function transfer (amount, recipient, node, account) {
             if (json.ok) {
                 nonce = json.data.nonce + 1
                 let transaction = {
+                    action: 'transfer',
                     fromPublicKey: publicKey,
                     toPublicKey: recipient,
                     amount: amount,
@@ -141,6 +142,8 @@ function transfer (amount, recipient, node, account) {
                 }
                 transaction.hash = getTransactionHash(transaction)
                 transaction.signature = signMessage(transaction.hash, secretKey)
+
+                console.log(getTransactionString(transaction))
 
                 fetch(node + '/sendTx', {
                     method: 'POST',

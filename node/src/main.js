@@ -106,22 +106,39 @@ function pushBlock (block) {
 
     for (let i = 0; i < block.transactions.length; i += 1) {
         let tx = block.transactions[i]
-        blockchainState.accounts[tx.fromPublicKey].balance = blockchainState.accounts[tx.fromPublicKey].balance.minus(tx.amount)
-        if (!(tx.toPublicKey in blockchainState.accounts)) {
-            blockchainState.accounts[tx.toPublicKey] = {
-                nonce: 0,
-                balance: ZERO,
-                staked: ZERO,
-                burned: ZERO
+
+        if (tx.action == 'transfer') {
+            // Transfer coins
+            blockchainState.accounts[tx.fromPublicKey].balance = blockchainState.accounts[tx.fromPublicKey].balance.minus(tx.amount)
+            if (!(tx.toPublicKey in blockchainState.accounts)) {
+                blockchainState.accounts[tx.toPublicKey] = {
+                    nonce: 0,
+                    balance: ZERO,
+                    staked: ZERO,
+                    burned: ZERO
+                }
+            }
+            blockchainState.accounts[tx.toPublicKey].balance = blockchainState.accounts[tx.toPublicKey].balance.plus(tx.amount)
+
+            // Burning
+            if (tx.toPublicKey == 'burn') {
+                blockchainState.accounts[tx.fromPublicKey].burned = blockchainState.accounts[tx.fromPublicKey].burned.plus(tx.amount)
             }
         }
-        blockchainState.accounts[tx.toPublicKey].balance = blockchainState.accounts[tx.toPublicKey].balance.plus(tx.amount)
-        blockchainState.accounts[tx.fromPublicKey].nonce += 1
 
-        // Burning
-        if (tx.toPublicKey == 'burn') {
-            blockchainState.accounts[tx.fromPublicKey].burned = blockchainState.accounts[tx.fromPublicKey].burned.plus(tx.amount)
+        else if (tx.action == 'stake') {
+            // Stake coins
+            blockchainState.accounts[tx.fromPublicKey].balance = blockchainState.accounts[tx.fromPublicKey].balance.minus(tx.amount)
+            blockchainState.accounts[tx.fromPublicKey].staked = blockchainState.accounts[tx.fromPublicKey].staked.plus(tx.amount)
         }
+
+        else if (tx.action == 'unstake') {
+            // Unstake coins
+            blockchainState.accounts[tx.fromPublicKey].balance = blockchainState.accounts[tx.fromPublicKey].balance.plus(tx.amount)
+            blockchainState.accounts[tx.fromPublicKey].staked = blockchainState.accounts[tx.fromPublicKey].staked.minus(tx.amount)
+        }
+
+        blockchainState.accounts[tx.fromPublicKey].nonce += 1
     }
 }
 
@@ -166,19 +183,25 @@ function getTransactionHash (transaction) {
 }
 
 function getTransactionString (transaction) {
-    return transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toFixed(12, 1) + transaction.nonce.toString()
+    return transaction.action + transaction.fromPublicKey + transaction.toPublicKey + transaction.amount.toFixed(12, 1) + transaction.nonce.toString()
 }
 
 function verifyTransaction (transaction) {
     try {
         transaction.amount = new BigNumber(transaction.amount)
-        return (transaction.fromPublicKey in blockchainState.accounts) &&
+
+        let good
+        if (transaction.action == 'transfer' || transaction.action == 'stake') good = transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].balance)
+        else if (transaction.action == 'unstake') good = transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].staked)
+
+        return (['transfer', 'stake', 'unstake'].includes(transaction.action)) &&
+               (transaction.fromPublicKey in blockchainState.accounts) &&
                (transaction.nonce == blockchainState.accounts[transaction.fromPublicKey].nonce + 1) &&
                (transaction.hash == getTransactionHash(transaction)) &&
                (verifySignature(transaction.hash, transaction.signature, importUint8Array(transaction.fromPublicKey))) &&
                (transaction.amount.gte(0)) &&
                (transaction.amount.dp() <= 12) &&
-               (transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].balance))
+               (good)
     }
     catch {
         return false
