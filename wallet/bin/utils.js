@@ -1,4 +1,4 @@
-const fetch = require('node-fetch')
+const fetch = require('sync-fetch')
 const fs = require('fs')
 const path = require('path')
 const nacl = require('tweetnacl')
@@ -46,30 +46,18 @@ function help (command) {
 }
 
 function status (node) {
-    fetch(node + '/getBlockchainHeight')
-        .then(res => res.json())
-        .then(json => {
-            if (json.ok) {
-                console.log('Current block:', json.data)
-                console.log('Current timestamp:', json.timestamp)
-            }
-            else {
-                console.log('Error!')
-            }
-        })
+    json = fetch(node + '/getBlockchainHeight').json()
+    if (json.ok) {
+        console.log('Current block:', json.data)
+        console.log('Current timestamp:', json.timestamp)
+    }
+    else console.log('Error!')
 }
 
 function balance (account, node) {
-    fetch(node + '/getAccount?account=' + account)
-        .then(res => res.json())
-        .then(json => {
-            if (json.ok) {
-                console.log(json.data.balance)
-            }
-            else {
-                console.log('Error!')
-            }
-        })
+    json = fetch(node + '/getAccount?account=' + account).json()
+    if (json.ok) console.log(json.data.balance)
+    else console.log('Error!')
 }
 
 function generateKeyPair (filePath, noFile) {
@@ -113,7 +101,7 @@ function generateKeyPair (filePath, noFile) {
     }
 }
 
-function transfer (amount, recipient, node, account) {
+function send_transaction (transaction, node, account) {
     let publicKey, secretKey
     if (fs.existsSync(account)) {
         let data = fs.readFileSync(getKeypairFilePath(account), 'utf8')
@@ -126,148 +114,55 @@ function transfer (amount, recipient, node, account) {
         secretKey = keypair.secretKey
         publicKey = exportUint8Array(keypair.publicKey)
     }
+
+    json = fetch(node + '/getAccount?account=' + publicKey).json()
+    if (json.ok) {
+        nonce = json.data.nonce + 1
+        transaction.fromPublicKey = publicKey
+        transaction.nonce = nonce
+        transaction.hash = getTransactionHash(transaction)
+        transaction.signature = signMessage(transaction.hash, secretKey)
+
+        console.log(getTransactionString(transaction))
+
+        return fetch(node + '/sendTx', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(transaction)
+        }).json().ok
+    }
+    else return false
+}
+
+function transfer (amount, recipient, node, account) {
     amount = new BigNumber(amount)
-
-    fetch(node + '/getAccount?account=' + publicKey)
-        .then(res => res.json())
-        .then(json => {
-            if (json.ok) {
-                nonce = json.data.nonce + 1
-                let transaction = {
-                    action: 'transfer',
-                    fromPublicKey: publicKey,
-                    toPublicKey: recipient,
-                    amount: amount,
-                    nonce: nonce
-                }
-                transaction.hash = getTransactionHash(transaction)
-                transaction.signature = signMessage(transaction.hash, secretKey)
-
-                console.log(getTransactionString(transaction))
-
-                fetch(node + '/sendTx', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(transaction)
-                })
-                  .then(res => res.json())
-                  .then(json => {
-                      if (json.ok) {
-                          console.log('Success!')
-                      }
-                      else {
-                          console.log('Error!')
-                      }
-                  })
-            }
-            else {
-                console.log('Error!')
-            }
-        })
+    let transaction = {
+        action: 'transfer',
+        toPublicKey: recipient,
+        amount: amount
+    }
+    if (send_transaction(transaction, node, account)) console.log('Success!')
+    else console.log('Error!')
 }
 
 function stake (amount, node, account) {
-    let publicKey, secretKey
-    if (fs.existsSync(account)) {
-        let data = fs.readFileSync(getKeypairFilePath(account), 'utf8')
-        publicKey = data.split('\n')[0]
-        secretKey = importUint8Array(data.split('\n')[1])
-    }
-    else {
-        secretKey = account
-        keypair = nacl.sign.keyPair.fromSecretKey(importUint8Array(secretKey))
-        secretKey = keypair.secretKey
-        publicKey = exportUint8Array(keypair.publicKey)
-    }
     amount = new BigNumber(amount)
-
-    fetch(node + '/getAccount?account=' + publicKey)
-        .then(res => res.json())
-        .then(json => {
-            if (json.ok) {
-                nonce = json.data.nonce + 1
-                let transaction = {
-                    action: 'stake',
-                    fromPublicKey: publicKey,
-                    amount: amount,
-                    nonce: nonce
-                }
-                transaction.hash = getTransactionHash(transaction)
-                transaction.signature = signMessage(transaction.hash, secretKey)
-
-                console.log(getTransactionString(transaction))
-
-                fetch(node + '/sendTx', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(transaction)
-                })
-                  .then(res => res.json())
-                  .then(json => {
-                      if (json.ok) {
-                          console.log('Success!')
-                      }
-                      else {
-                          console.log('Error!')
-                      }
-                  })
-            }
-            else {
-                console.log('Error!')
-            }
-        })
+    let transaction = {
+        action: 'stake',
+        amount: amount
+    }
+    if (send_transaction(transaction, node, account)) console.log('Success!')
+    else console.log('Error!')
 }
 
 function unstake (amount, node, account) {
-    let publicKey, secretKey
-    if (fs.existsSync(account)) {
-        let data = fs.readFileSync(getKeypairFilePath(account), 'utf8')
-        publicKey = data.split('\n')[0]
-        secretKey = importUint8Array(data.split('\n')[1])
-    }
-    else {
-        secretKey = account
-        keypair = nacl.sign.keyPair.fromSecretKey(importUint8Array(secretKey))
-        secretKey = keypair.secretKey
-        publicKey = exportUint8Array(keypair.publicKey)
-    }
     amount = new BigNumber(amount)
-
-    fetch(node + '/getAccount?account=' + publicKey)
-        .then(res => res.json())
-        .then(json => {
-            if (json.ok) {
-                nonce = json.data.nonce + 1
-                let transaction = {
-                    action: 'unstake',
-                    fromPublicKey: publicKey,
-                    amount: amount,
-                    nonce: nonce
-                }
-                transaction.hash = getTransactionHash(transaction)
-                transaction.signature = signMessage(transaction.hash, secretKey)
-
-                console.log(getTransactionString(transaction))
-
-                fetch(node + '/sendTx', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(transaction)
-                })
-                  .then(res => res.json())
-                  .then(json => {
-                      if (json.ok) {
-                          console.log('Success!')
-                      }
-                      else {
-                          console.log('Error!')
-                      }
-                  })
-            }
-            else {
-                console.log('Error!')
-            }
-        })
+    let transaction = {
+        action: 'unstake',
+        amount: amount
+    }
+    if (send_transaction(transaction, node, account)) console.log('Success!')
+    else console.log('Error!')
 }
 
 module.exports = {
