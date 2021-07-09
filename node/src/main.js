@@ -47,8 +47,12 @@ function getNextProducer () {
 
     // Not sure about RNG...
     let randomNumber = lastBlockHash.times(currentSlot).plus(lastBlock.timestamp)
+    let coinIndex = randomNumber.mod(getTotalAllocated())
 
-    return randomNumber
+    for (let account in blockchainState.accounts) {
+        coinIndex = coinIndex.minus(BURN_MULTIPLIER.times(blockchainState.accounts[account].burned).plus(blockchainState.accounts[account].staked))
+        if (coinIndex.lte(0)) return account
+    }
 }
 
 class Block {
@@ -98,8 +102,6 @@ function pushBlock (block) {
     lastBlock = block
     blockchainState.height = block.index + 1
 
-    console.log('>>>', getTotalAllocated().toString())
-
     blockTransactionHashes = []
     for (let i = 0; i < block.transactions.length; i += 1) blockTransactionHashes.push(block.transactions[i].hash)
     transactionPool = transactionPool.filter(transaction => !blockTransactionHashes.includes(transaction.hash))
@@ -142,13 +144,18 @@ function pushBlock (block) {
     }
 }
 
-function verifyBlock (block) {
+function verifyBlock (block, fullCheck) {
+    if (fullCheck == undefined) fullCheck = true
     try {
-        //let waited_producer = getNextProducer()
-        for (let i = 0; i < block.transactions.length; i += 1) {
-            if (!verifyTransaction(block.transactions[i])) return false
+        if (fullCheck) {
+            if (block.producer != getNextProducer()) return false
+
+            for (let i = 0; i < block.transactions.length; i += 1) {
+                if (!verifyTransaction(block.transactions[i])) return false
+            }
         }
-        return (block.index == blockchainState.height) &&
+
+        return (block.index == blockchainState.height - !fullCheck) &&
                (block.hash == getBlockHash(block)) &&
                (verifySignature(block.hash, block.signature, importUint8Array(block.producer)))
     }
@@ -215,6 +222,7 @@ var blockchainState = {
 }
 var transactionPool = []
 const BLOCK_TIME = 1000 // Block time, ms
+const HALF_BLOCK_TIME = Math.floor(BLOCK_TIME / 2)
 //=============Blockchain==============//
 
 
@@ -362,7 +370,7 @@ function initConnection (ws, client) {
                 break
 
             case Actions.RESPONSE_LAST_BLOCK:
-                if (verifyBlock(message.data)) lastBlock = message.data
+                if (verifyBlock(message.data, false)) lastBlock = message.data
                 break
 
             case Actions.RESPONSE_PEERS:
@@ -451,6 +459,7 @@ for (let i = 0; i < process.argv.length - 1; i += 1) {
 if (process.argv[process.argv.length - 1] == '--genesis') genesis = true
 
 if (keypair == undefined) keypair = generateKeyPair()
+let myPublicKey = exportUint8Array(keypair.publicKey)
 
 if (isNaN(wsPort)) process.exit(1)
 else initP2PServer(wsPort)
@@ -463,17 +472,20 @@ if (genesis) {
     blockchainState.accounts[exportUint8Array(keypair.publicKey)] = {
         nonce: 0,
         balance: new BigNumber('1000'),
-        staked: ZERO,
+        staked: new BigNumber('0.01'),
         burned: ZERO
     }
     pushBlock(new Block(0, [], keypair))
-    setInterval(() => {
+}
+
+setInterval(() => {
+    if (lastBlock && getCurrentTimestamp() - lastBlock.timestamp >= BLOCK_TIME && getNextProducer() == myPublicKey) {
         console.log('<<<<<<New block>>>>>>')
         let block = createNewBlock(transactionPool, keypair)
         pushBlock(block)
         broadcastBlock(block)
-    }, BLOCK_TIME + 1200)
-}
+    }
+}, HALF_BLOCK_TIME)
 
 setInterval(() => {
     console.log('==============')
@@ -481,6 +493,5 @@ setInterval(() => {
     for (let i in s) {
         console.log(i, '=>', s[i].balance.toString())
     }
-    console.log(transactionPool.length)
     console.log('==============')
 }, 1000)
