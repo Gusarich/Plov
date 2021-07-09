@@ -123,15 +123,15 @@ function send_transaction (transaction, node, account) {
         transaction.hash = getTransactionHash(transaction)
         transaction.signature = signMessage(transaction.hash, secretKey)
 
-        console.log(getTransactionString(transaction))
-
-        return fetch(node + '/sendTx', {
+        ok = fetch(node + '/sendTx', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(transaction)
         }).json().ok
+        if (ok) console.log('Success!')
+        else console.log('Error!')
     }
-    else return false
+    else console.log('Error!')
 }
 
 function transfer (amount, recipient, node, account) {
@@ -141,8 +141,7 @@ function transfer (amount, recipient, node, account) {
         toPublicKey: recipient,
         amount: amount
     }
-    if (send_transaction(transaction, node, account)) console.log('Success!')
-    else console.log('Error!')
+    send_transaction(transaction, node, account)
 }
 
 function stake (amount, node, account) {
@@ -151,8 +150,7 @@ function stake (amount, node, account) {
         action: 'stake',
         amount: amount
     }
-    if (send_transaction(transaction, node, account)) console.log('Success!')
-    else console.log('Error!')
+    send_transaction(transaction, node, account)
 }
 
 function unstake (amount, node, account) {
@@ -161,8 +159,7 @@ function unstake (amount, node, account) {
         action: 'unstake',
         amount: amount
     }
-    if (send_transaction(transaction, node, account)) console.log('Success!')
-    else console.log('Error!')
+    send_transaction(transaction, node, account)
 }
 
 module.exports = {

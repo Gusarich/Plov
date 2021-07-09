@@ -29,7 +29,7 @@ jobs:
           npm i express
           npm i body-parser
           npm i ws
-          npm i node-fetch
+          npm i sync-fetch
           sudo npm i -g wallet
 
       - name: install python packages
