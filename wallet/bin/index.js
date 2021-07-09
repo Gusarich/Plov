@@ -56,6 +56,15 @@ const options = yargs
         if (argv._[1] == null) utils.help('plov unstake')
         else utils.unstake(argv._[1], argv.node, argv.account)
     })
+    .command('burn', 'Burn Plov from selected account', yargs => {
+        argv = yargs
+            .usage('Usage: node burn <amount> [options]')
+            .positional('amount', {type: 'string'})
+            .demandOption(['node', 'account'])
+            .argv
+        if (argv._[1] == null) utils.help('plov burn')
+        else utils.transfer(argv._[1], 'burn', argv.node, argv.account)
+    })
     .nargs('node', 1)
     .describe('node', 'Remote node address')
     .describe('account', 'Public key / Secret key / Keypair filename')
