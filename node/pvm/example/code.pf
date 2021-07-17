@@ -1,0 +1,10 @@
+#int a = 5;
+#int b = 8;
+#int c = 2 * (a + b - 1);
+#c - b + a * 3 - 1;
+#c = 100 - c * 3;
+
+a == b;
+(a + b) == (c + a * (3 + b));
+
+#return a + b + c;

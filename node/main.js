@@ -472,7 +472,7 @@ if (genesis) {
     blockchainState.accounts[exportUint8Array(keypair.publicKey)] = {
         nonce: 0,
         balance: new BigNumber('1000'),
-        staked: new BigNumber('0.01'),
+        staked: new BigNumber('100'),
         burned: ZERO
     }
     pushBlock(new Block(0, [], keypair))

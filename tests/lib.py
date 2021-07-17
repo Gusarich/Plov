@@ -3,7 +3,7 @@ import sys
 import threading
 
 
-CMD_PREFIX = 'node ../node/src/main.js '
+CMD_PREFIX = 'node ../node/main.js '
 process_index = 0
 status = []
 processes = []
