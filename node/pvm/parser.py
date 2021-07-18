@@ -59,7 +59,7 @@ def parse_(tokens, priority=0):
 
     if not check and tokens[0][0] == 'RETURN':
         tree = [{tokens[0]: parse_(tokens[1:])}]
-    elif not check and tokens[0][0] == 'INT':
+    elif not check and tokens[0][0] in ['INT', 'STR']:
         if tokens[1][0] == 'LITERAL':
             if len(tokens) > 2:
                 tree = [{tokens[0]: tokens[1]}, parse_(tokens[1:])]

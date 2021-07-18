@@ -3,6 +3,7 @@ import re
 
 TOKENS = [
     ['INT', r'int\s+'],
+    ['STR', r'str\s+'],
     ['RETURN', r'return'],
     ['NUMBER', r'\d+'],
     ['LITERAL', r'\w+'],
@@ -14,6 +15,7 @@ TOKENS = [
     ['DIV', r'/'],
     ['LEFT_BRACKET', r'\('],
     ['RIGHT_BRACKET', r'\)'],
+    ['STRING', r'".*"'],
     ['SEMICOLON', r';']
 ]
 
