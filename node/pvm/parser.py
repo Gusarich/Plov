@@ -17,12 +17,12 @@ def split(tokens):
     return lines
 
 
-def find_bracket_end(tokens):
+def find_bracket_end(tokens, bracket='BRACKET'):
     brackets = 0
     for index, token in enumerate(tokens):
-        if not check_tree(token) and token[0] == 'LEFT_BRACKET':
+        if not check_tree(token) and token[0] == 'LEFT_' + bracket:
             brackets += 1
-        elif not check_tree(token) and token[0] == 'RIGHT_BRACKET':
+        elif not check_tree(token) and token[0] == 'RIGHT_' + bracket:
             brackets -= 1
             if brackets == 0:
                 return index
@@ -83,20 +83,35 @@ def parse_(tokens, priority=0):
 
 
 def parse(tokens):
-    lines = split(tokens)
+    line = []
     tree = []
 
-    for line in lines:
-        parsed = parse_(line)
-        if type(parsed) == type([]):
-            tree += parsed
+    index = 0
+
+    while index < len(tokens):
+        token = tokens[index]
+
+        if token[0] == 'SEMICOLON':
+            parsed = parse_(line)
+            if type(parsed) == type([]):
+                tree += parsed
+            else:
+                tree.append(parsed)
+            line = []
+        elif token[0] == 'LEFT_CURLY_BRACKET':
+            bracket = find_bracket_end(tokens[index:], 'CURLY_BRACKET')
+            line.append(parse(tokens[index + 1:index + bracket]))
+            index = bracket
         else:
-            tree.append(parsed)
+            line.append(token)
+
+        index += 1
+
+    print('=>', tree)
 
     return tree
 
 
-"""
 def pretty(d, indent=0):
     if type(d) != type({}):
         print(' ' * indent + str(d))
@@ -129,5 +144,3 @@ print('\n\n\n')
 for dic in tree:
     pretty(dic)
     print('\n')
-
-"""

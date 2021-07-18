@@ -5,6 +5,7 @@ TOKENS = [
     ['INT', r'int\s+'],
     ['STR', r'str\s+'],
     ['RETURN', r'return'],
+    ['IF', r'if'],
     ['NUMBER', r'\d+'],
     ['LITERAL', r'\w+'],
     ['EQUAL', r'=='],
@@ -15,6 +16,8 @@ TOKENS = [
     ['DIV', r'/'],
     ['LEFT_BRACKET', r'\('],
     ['RIGHT_BRACKET', r'\)'],
+    ['LEFT_CURLY_BRACKET', r'\{'],
+    ['RIGHT_CURLY_BRACKET', r'\}'],
     ['STRING', r'".*"'],
     ['SEMICOLON', r';']
 ]

@@ -1,12 +1,16 @@
-#int a = 5;
-#int b = 8;
-#int c = 2 * (a - (b - (a - 1 + b) + 1));
-#c - b + a * 3 - 1;
-#c = 100 - c * 3;
+#int i = 0;
+#int n = 5;
+#int a = 1;
 
-str d = "Hello, World!";
+if (n == 5) {
+    a = i + 3;
+    i = 1;
+}
 
-#a == b;
-#(a + b) == (c + a * (3 + b));
+if (a == 2) {}
 
-#return a + b + c;
+#while (i < n) {
+#    a = a + 2;
+#}
+
+#a = a + 1;

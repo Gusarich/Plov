@@ -136,4 +136,5 @@ pythonProcess.stdout.on('data', (data) => {
     console.log(data.toString())
     vm = new VM(data.toString())
     vm.run()
+    console.log(vm)
 })

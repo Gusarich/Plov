@@ -1,0 +1,30 @@
+{
+    "name": "plov-wallet",
+    "version": "1.0.0",
+    "description": "Plov CLI wallet",
+    "main": "bin/index.js",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Gusarich/Plov.git"
+    },
+    "keywords": [
+        "plov",
+        "cli"
+    ],
+    "author": "Daniil Sedov",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Gusarich/Plov/issues"
+    },
+    "homepage": "https://github.com/Gusarich/Plov#readme",
+    "bin": {
+        "plov": "./bin/index.js"
+    },
+    "dependencies": {
+        "bignumber.js": "^9.0.1",
+        "sync-fetch": "^0.3.0",
+        "tweetnacl": "^1.0.3",
+        "tweetnacl-util": "^0.15.1",
+        "yargs": "^17.0.1"
+    }
+}
