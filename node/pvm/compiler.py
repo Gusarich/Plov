@@ -15,8 +15,8 @@ def compile(tree):
 
     key = get_key(tree)
     val = tree[key]
-    print(key)
-    print(val)
+
+    print(key, '=>', val)
 
     if key[0] == 'INT':
         code += f'var int, "{val[1]}";\n'
@@ -62,6 +62,8 @@ tree = parse(tokens)
 code = ''
 for line in tree:
     print(line)
-    #compile(line)
+    compile(line)
     #print(code)
     print('\n')
+
+print(code)
