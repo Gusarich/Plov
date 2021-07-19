@@ -1,3 +1,6 @@
+from scoping import scoping
+
+
 PRIORITIES = [
     ['SET'],
     ['EQUAL'],
@@ -41,7 +44,7 @@ def expand_brackets(tokens):
 
 
 def check_tree(tree):
-    return type(tree) == type({})
+    return type(tree) == type({}) or type(tree) == type([])
 
 
 def parse_(tokens, priority=0):
@@ -100,14 +103,18 @@ def parse(tokens):
             line = []
         elif token[0] == 'LEFT_CURLY_BRACKET':
             bracket = find_bracket_end(tokens[index:], 'CURLY_BRACKET')
-            line.append(parse(tokens[index + 1:index + bracket]))
-            index = bracket
+
+            with scoping():
+                parsed = parse(tokens[index + 1:index + bracket])
+                scoping.keep('parsed')
+                print(tree)
+
+            line.append(parsed)
+            index = index + bracket
         else:
             line.append(token)
 
         index += 1
-
-    print('=>', tree)
 
     return tree
 
