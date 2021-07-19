@@ -9,6 +9,8 @@ TOKENS = [
     ['WHILE', r'while'],
     ['NUMBER', r'\d+'],
     ['LITERAL', r'\w+'],
+    ['OR', r'\|\|'],
+    ['AND', r'\&\&'],
     ['EQUAL', r'=='],
     ['NOT_EQUAL', r'!='],
     ['LOWER', r'<'],

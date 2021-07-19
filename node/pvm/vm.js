@@ -17,6 +17,7 @@ class VM {
     and                => Check if two top elements in stack are boolean true and push boolean result
     rev                => Reverse boolean value in top of the stack
     jmp value          => Jump to line
+    jmpif value        => Jump to line if there is boolean true in top of the stack
 
     */
 
@@ -36,7 +37,7 @@ class VM {
             lines.push([text])
             lastIndex = lines.length - 1
 
-            if (text == 'push' || text == 'set' || text == 'begin' || text == 'jmp') {
+            if (['push', 'set', 'begin', 'jmp', 'jmpif'].includes(text)) {
                 // 1 args
                 index = code.indexOf(';')
                 text = code.slice(prevIndex, index)
@@ -151,6 +152,11 @@ class VM {
         }
 
         else if (line[0] == 'jmp') {
+            this.index = line[1] - 1  // -1 so after index += 1 it's good
+            this.usedGas += 1
+        }
+
+        else if (line[0] == 'jmpif') {
             if (this.stack.pop()) {
                 this.index = line[1] - 1  // -1 so after index += 1 it's good
                 this.usedGas += 3

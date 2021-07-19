@@ -29,6 +29,22 @@ def compile(tree):
             code += f'push {val[1][1]};\n'
             code += f'set {val[0][1]};\n'
 
+    elif key[0] in ['OR', 'AND']:
+        if check_tree(val[0]):
+            compile(val[0])
+        else:
+            code += f'push {val[0][1]};\n'
+
+        if check_tree(val[1]):
+            compile(val[1])
+        else:
+            code += f'push {val[1][1]};\n'
+
+        if key[0] == 'OR':
+            code += 'or;\n'
+        elif key[0] == 'AND':
+            code += 'and;\n'
+
     elif key[0] in ['PLUS', 'MINUS', 'MULT', 'DIV']:
         if check_tree(val[1]):
             compile(val[1])
@@ -80,7 +96,7 @@ def compile(tree):
             code += f'push {val[0][1]};\n'
 
         ln = len(jump_lines)
-        code += f'rev;\njmp [{ln}];\n'
+        code += f'rev;\njmpif [{ln}];\n'
         jump_lines[ln] = -1
 
         for tr in val[1]:
@@ -88,6 +104,27 @@ def compile(tree):
                 compile(tr)
             else:
                 code += f'push {tr[1]};\n'
+        jump_lines[ln] = str(code.count(';'))
+
+    elif key[0] == 'WHILE':
+        after_jmp = str(code.count(';'))
+
+        if check_tree(val[0]):
+            compile(val[0])
+        else:
+            code += f'push {val[0][1]};\n'
+
+        ln = len(jump_lines)
+        code += f'rev;\njmpif [{ln}];\n'
+        jump_lines[ln] = -1
+
+        for tr in val[1]:
+            if check_tree(tr):
+                compile(tr)
+            else:
+                code += f'push {tr[1]};\n'
+
+        code += f'jmp {after_jmp};\n'
         jump_lines[ln] = str(code.count(';'))
 
 
@@ -100,7 +137,6 @@ jump_lines = {}
 code = 'begin "";\n'
 for line in tree:
     compile(line)
-
 
 for k, v in jump_lines.items():
     code = code.replace(f'[{k}]', str(v), 1)

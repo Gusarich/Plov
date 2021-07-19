@@ -3,6 +3,8 @@ from scoping import scoping
 
 PRIORITIES = [
     ['SET'],
+    ['OR'],
+    ['AND'],
     ['EQUAL', 'NOT_EQUAL', 'LOWER', 'GREATER', 'LOWER_OR_EQUAL', 'GREATER_OR_EQUAL'],
     ['PLUS', 'MINUS'],
     ['MULT', 'DIV'],
