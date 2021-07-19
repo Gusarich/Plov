@@ -106,7 +106,6 @@ def parse(tokens):
             tree.append({token: [condition, body]})
 
             index = ind + end
-            print(len(tokens), ind, end)
         elif token[0] == 'SEMICOLON':
             parsed = parse_(line)
             if type(parsed) == type([]):
@@ -122,6 +121,7 @@ def parse(tokens):
     return tree
 
 
+"""
 def pretty(d, indent=0):
     if type(d) != type({}):
         print(' ' * indent + str(d))
@@ -149,3 +149,4 @@ tree = parse(tokens)
 for dic in tree:
     pretty(dic)
     print('\n')
+"""

@@ -1,15 +1,22 @@
 class VM {
     /*
 
-    begin "name"
-    push value
-    pop
-    var type, "name"
-    set "name"
-    sum
-    sub
-    mul
-    div
+    begin "name"       => Begin of function
+    push value         => Push value to stack
+    pop                => Pop value from stack
+    var type, "name"   => Declare variable
+    set "name"         => Set value to variable
+    sum                => Sum two top elements from stack and push result
+    sub                => Sub two top elements from stack and push result
+    mul                => Mul two top elements from stack and push result
+    div                => Div two top elements from stack and push result
+    eq                 => Check if two top elements in stack are equal and push boolean result
+    lt                 => Check if top element is lower than element under it and push boolean result
+    gt                 => Check if top element is greater than element under it and push boolean result
+    or                 => Check if one of two top elements in stack is boolean true and push boolean result
+    and                => Check if two top elements in stack are boolean true and push boolean result
+    rev                => Reverse boolean value in top of the stack
+    jmp value          => Jump to line
 
     */
 
@@ -29,7 +36,7 @@ class VM {
             lines.push([text])
             lastIndex = lines.length - 1
 
-            if (text == 'push' || text == 'set' || text == 'begin') {
+            if (text == 'push' || text == 'set' || text == 'begin' || text == 'jmp') {
                 // 1 args
                 index = code.indexOf(';')
                 text = code.slice(prevIndex, index)
@@ -113,7 +120,46 @@ class VM {
             this.usedGas += 5
         }
 
+        else if (line[0] == 'eq') {
+            this.stack.push(this.stack.pop() == this.stack.pop())
+            this.usedGas += 4
+        }
+
+        else if (line[0] == 'lt') {
+            this.stack.push(this.stack.pop() < this.stack.pop())
+            this.usedGas += 4
+        }
+
+        else if (line[0] == 'gt') {
+            this.stack.push(this.stack.pop() > this.stack.pop())
+            this.usedGas += 4
+        }
+
+        else if (line[0] == 'or') {
+            this.stack.push(this.stack.pop() || this.stack.pop())
+            this.usedGas += 4
+        }
+
+        else if (line[0] == 'and') {
+            this.stack.push(this.stack.pop() && this.stack.pop())
+            this.usedGas += 4
+        }
+
+        else if (line[0] == 'rev') {
+            this.stack.push(!this.stack.pop())
+            this.usedGas += 3
+        }
+
+        else if (line[0] == 'jmp') {
+            if (this.stack.pop()) {
+                this.index = line[1] - 1  // -1 so after index += 1 it's good
+                this.usedGas += 3
+            }
+            else this.usedGas += 2
+        }
+
         console.log('Call =>', line)
+        console.log('Index =>', this.index)
         console.log('Stack =>', this.stack)
         console.log('Variables =>', this.variables)
         console.log()
