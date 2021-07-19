@@ -1,3 +1,5 @@
+from sys import argv
+
 from lexer import lex
 from parser import parse
 
@@ -12,6 +14,11 @@ def check_tree(tree):
 
 def compile(tree):
     global code
+
+    if not check_tree(tree):
+        if tree[0] in ['LITERAL', 'NUMBER', 'STRING']:
+            code += f'push {tree[1]};\n'
+            return
 
     key = get_key(tree)
     val = tree[key]
@@ -128,7 +135,7 @@ def compile(tree):
         jump_lines[ln] = str(code.count(';'))
 
 
-with open('example/code.pf', 'r') as f:
+with open(argv[1], 'r') as f:
     code = f.read()
 
 tokens = lex(code)
@@ -141,4 +148,5 @@ for line in tree:
 for k, v in jump_lines.items():
     code = code.replace(f'[{k}]', str(v), 1)
 
-print(code)
+with open(argv[1] + 'a', 'w') as f:
+    f.write(code)

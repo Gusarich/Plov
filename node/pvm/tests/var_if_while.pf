@@ -1,3 +1,6 @@
+# [10, 10, 22]
+# Test correct output
+
 int i = 0;
 int n = 5;
 int a = 1;
@@ -21,3 +24,7 @@ while (i < n) {
 }
 
 a = a + 1;
+
+
+# Test output
+i; n; a;

@@ -181,12 +181,9 @@ class VM {
 }
 
 const min = Math.min
-const spawn = require('child_process').spawn
-const pythonProcess = spawn('python3.9', ['compiler.py'])
-pythonProcess.stdout.on('data', (data) => {
-    console.log('compiled!')
-    console.log(data.toString())
-    vm = new VM(data.toString())
-    vm.run()
-    console.log(vm)
-})
+const fs = require('fs')
+code = fs.readFileSync(process.argv[2], 'utf8')
+
+vm = new VM(code.toString())
+vm.run()
+console.log(vm)
