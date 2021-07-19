@@ -3,7 +3,7 @@ from scoping import scoping
 
 PRIORITIES = [
     ['SET'],
-    ['EQUAL'],
+    ['EQUAL', 'NOT_EQUAL', 'LOWER', 'GREATER', 'LOWER_OR_EQUAL', 'GREATER_OR_EQUAL'],
     ['PLUS', 'MINUS'],
     ['MULT', 'DIV'],
 ]
@@ -88,29 +88,32 @@ def parse_(tokens, priority=0):
 def parse(tokens):
     line = []
     tree = []
+    wait_for_body = False
 
     index = 0
 
     while index < len(tokens):
         token = tokens[index]
 
-        if token[0] == 'SEMICOLON':
+        if token[0] in ['IF', 'WHILE']:
+            ind = index + 1 + find_bracket_end(tokens[index + 1:])
+            condition = tokens[index + 2:ind]
+
+            end = find_bracket_end(tokens[ind:], 'CURLY_BRACKET')
+            body = tokens[ind + 2:ind + end]
+
+            condition, body = parse_(condition), parse(body)
+            tree.append({token: [condition, body]})
+
+            index = ind + end
+            print(len(tokens), ind, end)
+        elif token[0] == 'SEMICOLON':
             parsed = parse_(line)
             if type(parsed) == type([]):
                 tree += parsed
             else:
                 tree.append(parsed)
             line = []
-        elif token[0] == 'LEFT_CURLY_BRACKET':
-            bracket = find_bracket_end(tokens[index:], 'CURLY_BRACKET')
-
-            with scoping():
-                parsed = parse(tokens[index + 1:index + bracket])
-                scoping.keep('parsed')
-                print(tree)
-
-            line.append(parsed)
-            index = index + bracket
         else:
             line.append(token)
 
@@ -142,11 +145,6 @@ with open('example/code.pf', 'r') as f:
 
 tokens = lex(code)
 tree = parse(tokens)
-
-for t in tree:
-    print(t)
-    print()
-print('\n\n\n')
 
 for dic in tree:
     pretty(dic)
