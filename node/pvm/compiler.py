@@ -52,7 +52,7 @@ def compile(tree):
         elif key[0] == 'AND':
             code += 'and;\n'
 
-    elif key[0] in ['PLUS', 'MINUS', 'MULT', 'DIV']:
+    elif key[0] in ['PLUS', 'MINUS', 'MULT', 'DIV', 'MOD']:
         if check_tree(val[1]):
             compile(val[1])
         else:
@@ -71,6 +71,8 @@ def compile(tree):
             code += 'mul;\n'
         elif key[0] == 'DIV':
             code += 'div;\n'
+        elif key[0] == 'MOD':
+            code += 'mod;\n'
 
     elif key[0] in ['EQUAL', 'NOT_EQUAL', 'LOWER', 'GREATER', 'LOWER_OR_EQUAL', 'GREATER_OR_EQUAL']:
         if check_tree(val[1]):
@@ -86,15 +88,22 @@ def compile(tree):
         if key[0] == 'EQUAL':
             code += 'eq;\n'
         elif key[0] == 'NOT_EQUAL':
-            code += 'eq;\nrev;'
+            code += 'eq;\nrev;\n'
         elif key[0] == 'LOWER':
             code += 'lt;\n'
         elif key[0] == 'GREATER':
             code += 'gt;\n'
         elif key[0] == 'LOWER_OR_EQUAL':
-            code += 'lt;\neq;\nor;'
+            code += 'lte;\n'
         elif key[0] == 'GREATER_OR_EQUAL':
-            code += 'gt;\neq;\nor;'
+            code += 'gte;\n'
+
+    elif key[0] == 'RETURN':
+        if check_tree(val):
+            compile(val)
+        else:
+            code += f'push {val[1]};\n'
+        code += 'stop;\n'
 
     elif key[0] == 'IF':
         if check_tree(val[0]):

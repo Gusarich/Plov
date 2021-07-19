@@ -10,14 +10,18 @@ class VM {
     sub                => Sub two top elements from stack and push result
     mul                => Mul two top elements from stack and push result
     div                => Div two top elements from stack and push result
+    mod                => Mod two top elements from stack and push result
     eq                 => Check if two top elements in stack are equal and push boolean result
     lt                 => Check if top element is lower than element under it and push boolean result
     gt                 => Check if top element is greater than element under it and push boolean result
+    lte                => Check if top element is lower or equal than element under it and push boolean result
+    gte                => Check if top element is greater or equal than element under it and push boolean result
     or                 => Check if one of two top elements in stack is boolean true and push boolean result
     and                => Check if two top elements in stack are boolean true and push boolean result
     rev                => Reverse boolean value in top of the stack
     jmp value          => Jump to line
     jmpif value        => Jump to line if there is boolean true in top of the stack
+    stop               => Stop execution
 
     */
 
@@ -27,7 +31,9 @@ class VM {
 
         while (code) {
             code = code.trimLeft()
-            let index = min(code.indexOf(' '), code.indexOf(';'))
+            let index = code.indexOf(';')
+            let index2 = code.indexOf(' ')
+            if (index2 < index && index2 != -1) index = index2
             let text = code.slice(0, index)
 
             if (text == '') break
@@ -121,6 +127,11 @@ class VM {
             this.usedGas += 5
         }
 
+        else if (line[0] == 'mod') {
+            this.stack.push(this.stack.pop() % this.stack.pop())
+            this.usedGas += 5
+        }
+
         else if (line[0] == 'eq') {
             this.stack.push(this.stack.pop() == this.stack.pop())
             this.usedGas += 4
@@ -134,6 +145,16 @@ class VM {
         else if (line[0] == 'gt') {
             this.stack.push(this.stack.pop() > this.stack.pop())
             this.usedGas += 4
+        }
+
+        else if (line[0] == 'lte') {
+            this.stack.push(this.stack.pop() <= this.stack.pop())
+            this.usedGas += 5
+        }
+
+        else if (line[0] == 'gte') {
+            this.stack.push(this.stack.pop() >= this.stack.pop())
+            this.usedGas += 5
         }
 
         else if (line[0] == 'or') {
@@ -164,6 +185,10 @@ class VM {
             else this.usedGas += 2
         }
 
+        else if (line[0] == 'stop') {
+            this.index = this.lines.length
+        }
+
         console.log('Call =>', line)
         console.log('Index =>', this.index)
         console.log('Stack =>', this.stack)
@@ -183,7 +208,6 @@ class VM {
 const min = Math.min
 const fs = require('fs')
 code = fs.readFileSync(process.argv[2], 'utf8')
-
 vm = new VM(code.toString())
 vm.run()
 console.log(vm)

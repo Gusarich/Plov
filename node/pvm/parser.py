@@ -4,7 +4,7 @@ PRIORITIES = [
     ['AND'],
     ['EQUAL', 'NOT_EQUAL', 'LOWER', 'GREATER', 'LOWER_OR_EQUAL', 'GREATER_OR_EQUAL'],
     ['PLUS', 'MINUS'],
-    ['MULT', 'DIV'],
+    ['MULT', 'DIV', 'MOD'],
 ]
 
 
@@ -120,7 +120,7 @@ def parse(tokens):
     return tree
 
 
-"""
+
 def pretty(d, indent=0):
     if type(d) != type({}):
         print(' ' * indent + str(d))
@@ -136,16 +136,16 @@ def pretty(d, indent=0):
                 else:
                     print(' ' * (indent + 2) + str(value))
 
+if __name__ == '__main__':
+    from lexer import lex
 
-from lexer import lex
+    with open('tests/prime_test.pf', 'r') as f:
+        code = f.read()
 
-with open('example/code.pf', 'r') as f:
-    code = f.read()
+    tokens = lex(code)
+    print(tokens)
+    tree = parse(tokens)
 
-tokens = lex(code)
-tree = parse(tokens)
-
-for dic in tree:
-    pretty(dic)
-    print('\n')
-"""
+    for dic in tree:
+        pretty(dic)
+        print('\n')
