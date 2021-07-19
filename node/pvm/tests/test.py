@@ -45,4 +45,4 @@ for file in files:
         print(COLORS['failed'] + 'Test failed ✘')
         flag = True
     if flag:
-        break
+        exit(1)

@@ -1,6 +1,3 @@
-from scoping import scoping
-
-
 PRIORITIES = [
     ['SET'],
     ['OR'],
