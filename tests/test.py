@@ -22,6 +22,7 @@ def print_after_test(passed):
             process.kill()
         exit(passed_tests != total_tests)
     print(f'Total {passed_tests}/{total_tests}' + COLORS['clear'])
+    sleep(1)
 
 
 COLORS = {
