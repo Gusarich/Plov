@@ -30,6 +30,7 @@ class VM {
         let lastIndex = 0
 
         while (code) {
+            //console.log(code)
             code = code.trimLeft()
             let index = code.indexOf(';')
             let index2 = code.indexOf(' ')
@@ -158,12 +159,14 @@ class VM {
         }
 
         else if (line[0] == 'or') {
-            this.stack.push(this.stack.pop() || this.stack.pop())
+            let a = this.stack.pop()
+            this.stack.push(this.stack.pop() || a)
             this.usedGas += 4
         }
 
         else if (line[0] == 'and') {
-            this.stack.push(this.stack.pop() && this.stack.pop())
+            let a = this.stack.pop()
+            this.stack.push(this.stack.pop() && a)
             this.usedGas += 4
         }
 
@@ -189,11 +192,11 @@ class VM {
             this.index = this.lines.length
         }
 
-        console.log('Call =>', line)
+        /*console.log('Call =>', line)
         console.log('Index =>', this.index)
         console.log('Stack =>', this.stack)
         console.log('Variables =>', this.variables)
-        console.log()
+        console.log()*/
 
         this.index += 1
     }
@@ -210,4 +213,4 @@ const fs = require('fs')
 code = fs.readFileSync(process.argv[2], 'utf8')
 vm = new VM(code.toString())
 vm.run()
-console.log(vm)
+console.dir(vm.stack, {'maxArrayLength': null})

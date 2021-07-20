@@ -27,13 +27,14 @@ total_tests = len(files)
 
 for file in files:
     flag = False
+    print('\n' + COLORS['header'] + file)
     with open(file, 'r') as f:
-        correct = json.loads(f.readline()[2:-1])
+        a = f.readline()[2:-1]
+        correct = json.loads(a)
     try:
         run_and_wait('python3.9 ../compiler.py ' + file, True)
         output = run_and_wait('node ../vm.js ' + file + 'a', False)
-        stack = output.split('stack:')[1].split('lines:')[0][:-4]
-        stack = json.loads(stack)[-len(correct):]
+        stack = json.loads(output)[-len(correct):]
         if stack == correct:
             passed_tests += 1
             print(COLORS['passed'] + 'Test passed ✔')
