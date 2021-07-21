@@ -211,6 +211,10 @@ class VM {
 const min = Math.min
 const fs = require('fs')
 code = fs.readFileSync(process.argv[2], 'utf8')
+console.time('prepare')
 vm = new VM(code.toString())
+console.timeEnd('prepare')
+console.time('run')
 vm.run()
-console.dir(vm.stack, {'maxArrayLength': null})
+console.timeEnd('run')
+if (process.argv.length <= 3) console.dir(vm.stack, {'maxArrayLength': null})
