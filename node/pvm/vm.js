@@ -58,15 +58,12 @@ class VM {
             }
             else if ([17, 19].includes(call[0])) {
                 // 2 args
-                console.log(code.slice(0, 10))
                 call.push(parseInt(code.slice(2, 4), 16))
                 let ln = parseInt(code.slice(4, 6), 16)
                 let s = code.slice(6, 6 + ln)
                 if (call[0] == 19 || call[1] == 2) {
                     // arg is string
-                    console.log(s)
                     let bytes = [...s.matchAll(/[^ ]{1,2}/g)].map(a => parseInt(a[0], 16))
-                    console.log(bytes)
                     call.push(Buffer.from(bytes).toString())
                 }
                 else {
@@ -85,7 +82,6 @@ class VM {
         this.stack = []
         this.calls = calls
         this.index = -1
-        console.log(calls)
         for (let i = 0; i < this.calls.length; i += 1) {
             if (this.calls[i][0] == 16 && this.calls[i][1] == '\x00') {
                 this.index = i + 1
@@ -101,8 +97,6 @@ class VM {
 
     runNextLine () {
         let line = this.calls[this.index]
-
-        console.log(line)
 
         if (line[0] == 17) {
             if (line[1] == 1) this.stack.push(line[2])
@@ -214,11 +208,12 @@ class VM {
             this.index = this.calls.length
         }
 
+        /*
         console.log('Call =>', line)
         console.log('Index =>', this.index)
         console.log('Stack =>', this.stack)
         console.log('Variables =>', this.variables)
-        console.log()
+        console.log()*/
 
         this.index += 1
     }
@@ -233,10 +228,10 @@ class VM {
 const min = Math.min
 const fs = require('fs')
 code = fs.readFileSync(process.argv[2], 'utf8')
-console.time('prepare')
+//console.time('prepare')
 vm = new VM(code.toString())
-console.timeEnd('prepare')
-console.time('run')
+//console.timeEnd('prepare')
+//console.time('run')
 vm.run()
-console.timeEnd('run')
+//console.timeEnd('run')
 if (process.argv.length <= 3) console.dir(vm.stack, {'maxArrayLength': null})
