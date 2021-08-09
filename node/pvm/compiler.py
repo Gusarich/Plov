@@ -17,15 +17,19 @@ def encode(value):
         ret = hex(int(value))[2:]
     else:
         ret = ''.join('{:02x}'.format(ord(c)) for c in value)
-    return hex(len(ret))[2:] + ret
+    length = hex(len(ret))[2:]
+    return '0' * (2 - len(length)) + length + ret
 
 
 def compile(tree):
     global code
 
     if not check_tree(tree):
-        if tree[0] in ['LITERAL', 'NUMBER', 'STRING']:
-            code += f'11{encode(tree[1])}'
+        if tree[0] == 'NUMBER' or tree[0] == 'STRING':
+            code += f'1101{encode(tree[1])}'
+            return
+        elif tree[0] == 'LITERAL':
+            code += f'1102{encode(tree[1])}'
             return
 
     key = get_key(tree)
@@ -41,19 +45,28 @@ def compile(tree):
             compile(val[1])
             code += f'14{encode(val[0][1])}'
         else:
-            code += f'11{encode(val[1][1])}'
+            if val[1][0] == 'LITERAL':
+                code += f'1102{encode(val[1][1])}'
+            else:
+                code += f'1101{encode(val[1][1])}'
             code += f'14{encode(val[0][1])}'
 
     elif key[0] in ['OR', 'AND']:
         if check_tree(val[0]):
             compile(val[0])
         else:
-            code += f'11{encode(val[0][1])}'
+            if val[0][0] == 'LITERAL':
+                code += f'1102{encode(val[0][1])}'
+            else:
+                code += f'1101{encode(val[0][1])}'
 
         if check_tree(val[1]):
             compile(val[1])
         else:
-            code += f'11{encode(val[1][1])}'
+            if val[1][0] == 'LITERAL':
+                code += f'1102{encode(val[1][1])}'
+            else:
+                code += f'1101{encode(val[1][1])}'
 
         if key[0] == 'OR':
             code += '20'
@@ -64,12 +77,18 @@ def compile(tree):
         if check_tree(val[1]):
             compile(val[1])
         else:
-            code += f'11{encode(val[1][1])}'
+            if val[1][0] == 'LITERAL':
+                code += f'1102{encode(val[1][1])}'
+            else:
+                code += f'1101{encode(val[1][1])}'
 
         if check_tree(val[0]):
             compile(val[0])
         else:
-            code += f'11{encode(val[0][1])}'
+            if val[0][0] == 'LITERAL':
+                code += f'1102{encode(val[0][1])}'
+            else:
+                code += f'1101{encode(val[0][1])}'
 
         if key[0] == 'PLUS':
             code += '15'
@@ -86,12 +105,18 @@ def compile(tree):
         if check_tree(val[1]):
             compile(val[1])
         else:
-            code += f'11{encode(val[1][1])}'
+            if val[1][0] == 'LITERAL':
+                code += f'1102{encode(val[1][1])}'
+            else:
+                code += f'1101{encode(val[1][1])}'
 
         if check_tree(val[0]):
             compile(val[0])
         else:
-            code += f'11{encode(val[0][1])}'
+            if val[0][0] == 'LITERAL':
+                code += f'1102{encode(val[0][1])}'
+            else:
+                code += f'1101{encode(val[0][1])}'
 
         if key[0] == 'EQUAL':
             code += '1a'
@@ -110,14 +135,20 @@ def compile(tree):
         if check_tree(val):
             compile(val)
         else:
-            code += f'11{encode(val[1])}'
+            if val[1][0] == 'LITERAL':
+                code += f'1102{encode(val[1][1])}'
+            else:
+                code += f'1101{encode(val[1][1])}'
         code += '25'
 
     elif key[0] == 'IF':
         if check_tree(val[0]):
             compile(val[0])
         else:
-            code += f'11{encode(val[0][1])}'
+            if val[0][0] == 'LITERAL':
+                code += f'1102{encode(val[0][1])}'
+            else:
+                code += f'1101{encode(val[0][1])}'
 
         ln = len(jump_lines)
         code += f'24[{ln}]'
@@ -136,7 +167,10 @@ def compile(tree):
         if check_tree(val[0]):
             compile(val[0])
         else:
-            code += f'11{encode(val[0][1])}'
+            if val[0][0] == 'LITERAL':
+                code += f'1102{encode(val[0][1])}'
+            else:
+                code += f'1101{encode(val[0][1])}'
 
         ln = len(jump_lines)
         code += f'24[{ln}]'
@@ -158,7 +192,7 @@ with open(argv[1], 'r') as f:
 tokens = lex(code)
 tree = parse(tokens)
 jump_lines = {}
-code = '100'
+code = '10010'
 for line in tree:
     compile(line)
 
