@@ -1,27 +1,36 @@
 class VM {
     /*
 
-    begin "name"       => Begin of function
-    push value         => Push value to stack
-    pop                => Pop value from stack
-    var type, "name"   => Declare variable
-    set "name"         => Set value to variable
-    sum                => Sum two top elements from stack and push result
-    sub                => Sub two top elements from stack and push result
-    mul                => Mul two top elements from stack and push result
-    div                => Div two top elements from stack and push result
-    mod                => Mod two top elements from stack and push result
-    eq                 => Check if two top elements in stack are equal and push boolean result
-    lt                 => Check if top element is lower than element under it and push boolean result
-    gt                 => Check if top element is greater than element under it and push boolean result
-    lte                => Check if top element is lower or equal than element under it and push boolean result
-    gte                => Check if top element is greater or equal than element under it and push boolean result
-    or                 => Check if one of two top elements in stack is boolean true and push boolean result
-    and                => Check if two top elements in stack are boolean true and push boolean result
-    rev                => Reverse boolean value in top of the stack
-    jmp value          => Jump to line
-    jmpif value        => Jump to line if there is boolean true in top of the stack
-    stop               => Stop execution
+    <===Types===>
+    01  int
+    02  str
+    03  bool
+    <===Types===>
+
+    <===Commands===>
+    10  begin "name"       => Begin of function
+    11  push value         => Push value to stack
+    12  pop                => Pop value from stack
+    13  var type, "name"   => Declare variable
+    14  set "name"         => Set value from top of the stack to variable
+    15  sum                => Sum two top elements from stack and push result
+    16  sub                => Sub two top elements from stack and push result
+    17  mul                => Mul two top elements from stack and push result
+    18  div                => Div two top elements from stack and push result
+    19  mod                => Mod two top elements from stack and push result
+    1a  eq                 => Check if two top elements in stack are equal and push boolean result
+    1b  neq                => Check if two top elements in stack are not equal and push boolean result
+    1c  lt                 => Check if top element is lower than element under it and push boolean result
+    1d  gt                 => Check if top element is greater than element under it and push boolean result
+    1e  lte                => Check if top element is lower or equal than element under it and push boolean result
+    1f  gte                => Check if top element is greater or equal than element under it and push boolean result
+    20  or                 => Check if one of two top elements in stack is boolean true and push boolean result
+    21  and                => Check if two top elements in stack are boolean true and push boolean result
+    22  rev                => Reverse boolean value in top of the stack
+    23  jmp value          => Jump to line
+    24  jmpif value        => Jump to line if there is boolean false in top of the stack
+    25  stop               => Stop execution
+    <===Commands===>
 
     */
 
