@@ -34,7 +34,7 @@ for file in files:
     try:
         run_and_wait('python3.9 ../compiler.py ' + file, True)
         output = run_and_wait('node ../vm.js ' + file + 'a', False)
-        stack = json.loads(output)[-len(correct):]
+        stack = json.loads(output)
         if stack == correct:
             passed_tests += 1
             print(COLORS['passed'] + 'Test passed ✔')
