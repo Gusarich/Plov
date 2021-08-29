@@ -32,7 +32,7 @@ for file in files:
         a = f.readline()[2:-1]
         correct = json.loads(a)
     try:
-        run_and_wait('python3.9 ../compiler.py ' + file, True)
+        run_and_wait('python ../compiler.py ' + file, True)
         output = run_and_wait('node ../vm.js ' + file + 'a', False)
         stack = json.loads(output)
         if stack == correct:

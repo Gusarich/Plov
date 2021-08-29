@@ -1,7 +1,7 @@
 from sys import argv
 
-from lexer import lex
-from parser import parse
+from _lexer import lex
+from _parser import parse
 
 
 def get_key(tree):
