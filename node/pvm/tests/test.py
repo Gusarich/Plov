@@ -18,6 +18,8 @@ COLORS = {
     'clear': '\x1b[0m'
 }
 
+os.system('color')
+
 files = os.listdir()
 files.remove('test.py')
 files = [i for i in files if not i.endswith('.pfa')]
