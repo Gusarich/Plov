@@ -122,7 +122,10 @@ def parse(tokens):
 
 
 def pretty(d, indent=0):
-    if type(d) != type({}):
+    if type(d) == type([]):
+        for i in d:
+            pretty(i, indent)
+    elif type(d) != type({}):
         print(' ' * indent + str(d))
     else:
         for key, value in d.items():
