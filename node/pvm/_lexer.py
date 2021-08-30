@@ -6,6 +6,7 @@ TOKENS = [
     ['STR', r'str\s+'],
     ['RETURN', r'return'],
     ['IF', r'if'],
+    ['ELSE', r'else'],
     ['WHILE', r'while'],
     ['NUMBER', r'\d+'],
     ['LITERAL', r'\w+'],

@@ -105,6 +105,15 @@ def parse(tokens):
             tree.append({token: [condition, body]})
 
             index = ind + end
+        elif token[0] == 'ELSE':
+            ind = index + 1
+
+            end = find_bracket_end(tokens[ind:], 'CURLY_BRACKET')
+            body = parse(tokens[ind + 1:ind + end])
+
+            tree[-1][('IF', 'if')].append(body)
+
+            index = ind + end
         elif token[0] == 'SEMICOLON':
             parsed = parse_(line)
             if type(parsed) == type([]):
@@ -148,7 +157,6 @@ if __name__ == '__main__':
         code = f.read()
 
     tokens = lex(code)
-    print(tokens)
     tree = parse(tokens)
 
     for dic in tree:
