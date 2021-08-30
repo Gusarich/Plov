@@ -142,6 +142,8 @@ def compile(tree):
         code += '25;'
 
     elif key[0] == 'IF':
+        is_else = len(val) == 3
+
         if check_tree(val[0]):
             compile(val[0])
         else:
@@ -158,8 +160,29 @@ def compile(tree):
             if check_tree(tr):
                 compile(tr)
             else:
-                code += f'11{encode(tr[1])};'
-        jump_lines[ln] = code.count(';')
+                if tr[0] == 'LITERAL':
+                    code += f'1102{encode(tr[1])};'
+                else:
+                    code += f'1101{encode(tr[1])};'
+
+        jump_lines[ln] = code.count(';') + is_else
+
+        if is_else:
+            else_ln = len(jump_lines)
+            code += f'23[{else_ln}];'
+            jump_lines[else_ln] = -1
+
+        if is_else:
+            for tr in val[2]:
+                if check_tree(tr):
+                    compile(tr)
+                else:
+                    if tr[0] == 'LITERAL':
+                        code += f'1102{encode(tr[1])};'
+                    else:
+                        code += f'1101{encode(tr[1])};'
+
+            jump_lines[else_ln] = code.count(';')
 
     elif key[0] == 'WHILE':
         after_jmp = code.count(';')
@@ -180,7 +203,10 @@ def compile(tree):
             if check_tree(tr):
                 compile(tr)
             else:
-                code += f'11{encode(tr[1])};'
+                if tr[0] == 'LITERAL':
+                    code += f'1102{encode(tr[1])};'
+                else:
+                    code += f'1101{encode(tr[1])};'
 
         code += f'23{encode(after_jmp)};'
         jump_lines[ln] = code.count(';')

@@ -208,8 +208,8 @@ class VM {
             this.index = this.calls.length
         }
 
-        /*
-        console.log('Call =>', line)
+
+        /*console.log('Call =>', line)
         console.log('Index =>', this.index)
         console.log('Stack =>', this.stack)
         console.log('Variables =>', this.variables)
