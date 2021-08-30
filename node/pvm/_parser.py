@@ -108,12 +108,29 @@ def parse(tokens):
         elif token[0] == 'ELSE':
             ind = index + 1
 
-            end = find_bracket_end(tokens[ind:], 'CURLY_BRACKET')
-            body = parse(tokens[ind + 1:ind + end])
+            if tokens[ind][0] == 'IF':  # ELSE IF
+                index = ind
 
-            tree[-1][('IF', 'if')].append(body)
+                ind = index + 1 + find_bracket_end(tokens[index + 1:])
+                condition = tokens[index + 2:ind]
 
-            index = ind + end
+                end = find_bracket_end(tokens[ind:], 'CURLY_BRACKET')
+                body = tokens[ind + 2:ind + end]
+
+                condition, body = parse_(condition), parse(body)
+                tree[-1][('IF', 'if')].append([{tokens[index]: [condition, body]}])
+
+                index = ind + end
+            else:  # ELSE
+                end = find_bracket_end(tokens[ind:], 'CURLY_BRACKET')
+                body = parse(tokens[ind + 1:ind + end])
+
+                if_ = tree[-1][('IF', 'if')]
+                while len(if_) == 3 and len(if_[2]) == 1 and ('IF', 'if') in if_[2][0]:
+                    if_ = if_[2][0][('IF', 'if')]
+                if_.append(body)
+
+                index = ind + end
         elif token[0] == 'SEMICOLON':
             parsed = parse_(line)
             if type(parsed) == type([]):
