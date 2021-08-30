@@ -136,10 +136,12 @@ def pretty(d, indent=0):
                 else:
                     print(' ' * (indent + 2) + str(value))
 
-if __name__ == '__main__':
-    from lexer import lex
 
-    with open('tests/prime_test.pf', 'r') as f:
+if __name__ == '__main__':
+    from _lexer import lex
+    import sys
+
+    with open(sys.argv[1], 'r') as f:
         code = f.read()
 
     tokens = lex(code)
