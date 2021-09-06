@@ -29,7 +29,7 @@ total_tests = len(files)
 
 for file in files:
     flag = False
-    print('\n' + COLORS['header'] + file)
+    print(COLORS['header'] + '---------------------\n' + file)
     with open(file, 'r') as f:
         a = f.readline()[2:-1]
         correct = json.loads(a)
@@ -47,5 +47,6 @@ for file in files:
         print(e)
         print(COLORS['failed'] + 'Test failed ✘')
         flag = True
-    if flag:
-        exit(1)
+
+print(COLORS['header'] + '---------------------' + COLORS['clear'])
+exit(flag)

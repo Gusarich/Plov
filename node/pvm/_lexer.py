@@ -4,10 +4,12 @@ import re
 TOKENS = [
     ['INT', r'int\s+'],
     ['STR', r'str\s+'],
+    ['BOOL', r'bool\s+'],
     ['RETURN', r'return'],
     ['IF', r'if'],
     ['ELSE', r'else'],
     ['WHILE', r'while'],
+    ['BOOLEAN', r'true|false'],
     ['NUMBER', r'\d+'],
     ['LITERAL', r'\w+'],
     ['OR', r'\|\|'],

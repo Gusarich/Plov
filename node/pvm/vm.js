@@ -93,12 +93,15 @@ class VM {
         }
         this.usedGas = 100
         this.variables = {}
+
+        //console.log(this.calls)
     }
 
     runNextLine () {
         let line = this.calls[this.index]
 
         if (line[0] == 17) {
+            //console.log(line, this.variables)
             if (line[1] == 1) this.stack.push(line[2])
             else this.stack.push(this.variables[line[2]][1])
             this.usedGas += 1
@@ -208,8 +211,8 @@ class VM {
             this.index = this.calls.length
         }
 
-
-        /*console.log('Call =>', line)
+        /*
+        console.log('Call =>', line)
         console.log('Index =>', this.index)
         console.log('Stack =>', this.stack)
         console.log('Variables =>', this.variables)

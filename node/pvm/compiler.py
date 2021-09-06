@@ -39,6 +39,8 @@ def compile(tree):
         code += f'1301{encode(val[1])};'
     elif key[0] == 'STR':
         code += f'1302{encode(val[1])};'
+    elif key[0] == 'BOOL':
+        code += f'1303{encode(val[1])};'
 
     elif key[0] == 'SET':
         if check_tree(val[1]):
@@ -47,6 +49,11 @@ def compile(tree):
         else:
             if val[1][0] == 'LITERAL':
                 code += f'1102{encode(val[1][1])};'
+            elif val[1][0] == 'BOOLEAN':
+                if val[1][1] == 'true':
+                    code += f'1101011;'
+                else:
+                    code += f'1101010;'
             else:
                 code += f'1101{encode(val[1][1])};'
             code += f'14{encode(val[0][1])};'
