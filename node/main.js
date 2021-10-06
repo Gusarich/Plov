@@ -50,7 +50,7 @@ function getNextProducer () {
     let coinIndex = randomNumber.mod(getTotalAllocated())
 
     for (let account in blockchainState.accounts) {
-        coinIndex = coinIndex.minus(BURN_MULTIPLIER.times(blockchainState.accounts[account].burned).plus(blockchainState.accounts[account].staked))
+        coinIndex = coinIndex.minus(blockchainState.accounts[account].allocated)
         if (coinIndex.lte(0)) return account
     }
 }
@@ -90,10 +90,14 @@ function broadcastTransaction (transaction) {
     broadcast(message)
 }
 
+function getAccountMaxAllocation (account) {
+    return blockchainState.accounts[account].burned.times(2).plus(blockchainState.accounts[account].staked)
+}
+
 function getTotalAllocated () {
     let total = ZERO
     for (let account in blockchainState.accounts) {
-        total = total.plus(BURN_MULTIPLIER.times(blockchainState.accounts[account].burned).plus(blockchainState.accounts[account].staked))
+        total = total.plus(blockchainState.accounts[account].allocated)
     }
     return total
 }
@@ -117,7 +121,8 @@ function pushBlock (block) {
                     nonce: 0,
                     balance: ZERO,
                     staked: ZERO,
-                    burned: ZERO
+                    burned: ZERO,
+                    allocated: ZERO
                 }
             }
             blockchainState.accounts[tx.toPublicKey].balance = blockchainState.accounts[tx.toPublicKey].balance.plus(tx.amount)
@@ -138,6 +143,16 @@ function pushBlock (block) {
             // Unstake coins
             blockchainState.accounts[tx.fromPublicKey].balance = blockchainState.accounts[tx.fromPublicKey].balance.plus(tx.amount)
             blockchainState.accounts[tx.fromPublicKey].staked = blockchainState.accounts[tx.fromPublicKey].staked.minus(tx.amount)
+        }
+
+        else if (tx.action == 'allocate') {
+            // Allocate coins
+            blockchainState.accounts[tx.fromPublicKey].allocated = blockchainState.accounts[tx.fromPublicKey].allocated.plus(tx.amount)
+        }
+
+        else if (tx.action == 'deallocate') {
+            // Deallocate coins
+            blockchainState.accounts[tx.fromPublicKey].allocated = blockchainState.accounts[tx.fromPublicKey].allocated.minus(tx.amount)
         }
 
         blockchainState.accounts[tx.fromPublicKey].nonce += 1
@@ -200,8 +215,10 @@ function verifyTransaction (transaction) {
         let good
         if (transaction.action == 'transfer' || transaction.action == 'stake') good = transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].balance)
         else if (transaction.action == 'unstake') good = transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].staked)
+        else if (transaction.action == 'allocate') good = blockchainState.accounts[transaction.fromPublicKey].allocated.plus(transaction.amount).lte(getAccountMaxAllocation(transaction.fromPublicKey))
+        else if (transaction.action == 'deallocate') good = blockchainState.accounts[transaction.fromPublicKey].allocated.gte(transaction.amount)
 
-        return (['transfer', 'stake', 'unstake'].includes(transaction.action)) &&
+        return (['transfer', 'stake', 'unstake', 'allocate', 'deallocate'].includes(transaction.action)) &&
                (transaction.fromPublicKey in blockchainState.accounts) &&
                (transaction.nonce == blockchainState.accounts[transaction.fromPublicKey].nonce + 1) &&
                (transaction.hash == getTransactionHash(transaction)) &&
@@ -256,7 +273,8 @@ function initHTTPServer (port) {
                 nonce: 0,
                 balance: 0,
                 staked: 0,
-                burned: 0
+                burned: 0,
+                allocated: 0
             }))
         }
     })
@@ -363,7 +381,8 @@ function initConnection (ws, client) {
                             nonce: account.nonce,
                             balance: new BigNumber(account.balance),
                             staked: new BigNumber(account.staked),
-                            burned: new BigNumber(account.burned)
+                            burned: new BigNumber(account.burned),
+                            allocated: new BigNumber(account.allocated)
                         }
                     }
                 }
@@ -473,7 +492,8 @@ if (genesis) {
         nonce: 0,
         balance: new BigNumber('1000'),
         staked: new BigNumber('100'),
-        burned: ZERO
+        burned: ZERO,
+        allocated: new BigNumber('100')
     }
     pushBlock(new Block(0, [], keypair))
 }

@@ -162,6 +162,24 @@ function unstake (amount, node, account) {
     send_transaction(transaction, node, account)
 }
 
+function allocate (amount, node, account) {
+    amount = new BigNumber(amount)
+    let transaction = {
+        action: 'allocate',
+        amount: amount
+    }
+    send_transaction(transaction, node, account)
+}
+
+function deallocate (amount, node, account) {
+    amount = new BigNumber(amount)
+    let transaction = {
+        action: 'deallocate',
+        amount: amount
+    }
+    send_transaction(transaction, node, account)
+}
+
 module.exports = {
     help: help,
     status: status,
@@ -169,5 +187,7 @@ module.exports = {
     generateKeyPair: generateKeyPair,
     transfer: transfer,
     stake: stake,
-    unstake: unstake
+    unstake: unstake,
+    allocate: allocate,
+    deallocate: deallocate
 }

@@ -56,6 +56,24 @@ const options = yargs
         if (argv._[1] == null) utils.help('plov unstake')
         else utils.unstake(argv._[1], argv.node, argv.account)
     })
+    .command('allocate', 'Allocate Plov to selected account', yargs => {
+        argv = yargs
+            .usage('Usage: node allocate <amount> [options]')
+            .positional('amount', {type: 'string'})
+            .demandOption(['node', 'account'])
+            .argv
+        if (argv._[1] == null) utils.help('plov allocate')
+        else utils.allocate(argv._[1], argv.node, argv.account)
+    })
+    .command('deallocate', 'Deallocate Plov from selected account', yargs => {
+        argv = yargs
+            .usage('Usage: node deallocate <amount> [options]')
+            .positional('amount', {type: 'string'})
+            .demandOption(['node', 'account'])
+            .argv
+        if (argv._[1] == null) utils.help('plov deallocate')
+        else utils.deallocate(argv._[1], argv.node, argv.account)
+    })
     .command('burn', 'Burn Plov from selected account', yargs => {
         argv = yargs
             .usage('Usage: node burn <amount> [options]')
