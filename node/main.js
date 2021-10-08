@@ -50,7 +50,7 @@ function getNextProducer () {
     let coinIndex = randomNumber.mod(getTotalAllocated())
 
     for (let account in blockchainState.accounts) {
-        coinIndex = coinIndex.minus(blockchainState.accounts[account].allocated)
+        coinIndex = coinIndex.minus(getAccountAllocation(account))
         if (coinIndex.lte(0)) return account
     }
 }
@@ -94,10 +94,19 @@ function getAccountMaxAllocation (account) {
     return blockchainState.accounts[account].burned.times(2).plus(blockchainState.accounts[account].staked)
 }
 
+function getAccountAllocation (account) {
+    let total = ZERO
+    account = blockchainState.accounts[account]
+    for (let allocation in account.allocation) {
+        total = total.plus(allocation[0].times(allocation[1]))
+    }
+    return total
+}
+
 function getTotalAllocated () {
     let total = ZERO
     for (let account in blockchainState.accounts) {
-        total = total.plus(blockchainState.accounts[account].allocated)
+        total = total.plus(getAccountAllocation(account))
     }
     return total
 }
@@ -122,7 +131,7 @@ function pushBlock (block) {
                     balance: ZERO,
                     staked: ZERO,
                     burned: ZERO,
-                    allocated: ZERO
+                    allocation: []
                 }
             }
             blockchainState.accounts[tx.toPublicKey].balance = blockchainState.accounts[tx.toPublicKey].balance.plus(tx.amount)
@@ -147,12 +156,21 @@ function pushBlock (block) {
 
         else if (tx.action == 'allocate') {
             // Allocate coins
-            blockchainState.accounts[tx.fromPublicKey].allocated = blockchainState.accounts[tx.fromPublicKey].allocated.plus(tx.amount)
+            blockchainState.accounts[tx.fromPublicKey].allocation.push([tx.amount, block.index])
         }
 
         else if (tx.action == 'deallocate') {
             // Deallocate coins
-            blockchainState.accounts[tx.fromPublicKey].allocated = blockchainState.accounts[tx.fromPublicKey].allocated.minus(tx.amount)
+            let amount = tx.amount
+            while (amount > 0) {
+                if (blockchainState.accounts[tx.fromPublicKey].allocation[0][0].gte(amount)) {
+                    blockchainState.accounts[tx.fromPublicKey].allocation[0][0] = blockchainState.accounts[tx.fromPublicKey].allocation[0][0].minus(amount)
+                    amount = 0
+                }
+                else {
+                    amount = amount.minus(blockchainState.accounts[tx.fromPublicKey].allocation[0].shift()[0])
+                }
+            }
         }
 
         blockchainState.accounts[tx.fromPublicKey].nonce += 1
@@ -215,8 +233,8 @@ function verifyTransaction (transaction) {
         let good
         if (transaction.action == 'transfer' || transaction.action == 'stake') good = transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].balance)
         else if (transaction.action == 'unstake') good = transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].staked)
-        else if (transaction.action == 'allocate') good = blockchainState.accounts[transaction.fromPublicKey].allocated.plus(transaction.amount).lte(getAccountMaxAllocation(transaction.fromPublicKey))
-        else if (transaction.action == 'deallocate') good = blockchainState.accounts[transaction.fromPublicKey].allocated.gte(transaction.amount)
+        else if (transaction.action == 'allocate') good = getAccountAllocation(transaction.fromPublicKey).plus(transaction.amount).lte(getAccountMaxAllocation(transaction.fromPublicKey))
+        else if (transaction.action == 'deallocate') good = getAccountAllocation(transaction.fromPublicKey).gte(transaction.amount)
 
         return (['transfer', 'stake', 'unstake', 'allocate', 'deallocate'].includes(transaction.action)) &&
                (transaction.fromPublicKey in blockchainState.accounts) &&
@@ -274,7 +292,7 @@ function initHTTPServer (port) {
                 balance: 0,
                 staked: 0,
                 burned: 0,
-                allocated: 0
+                allocation: []
             }))
         }
     })
@@ -377,12 +395,13 @@ function initConnection (ws, client) {
                     blockchainState = message.data
                     for (let address in blockchainState.accounts) {
                         let account = blockchainState.accounts[address]
+                        let allocation = account.allocation.map(e => new BigNumber(e))
                         blockchainState.accounts[address] = {
                             nonce: account.nonce,
                             balance: new BigNumber(account.balance),
                             staked: new BigNumber(account.staked),
                             burned: new BigNumber(account.burned),
-                            allocated: new BigNumber(account.allocated)
+                            allocation: account.allocation
                         }
                     }
                 }
@@ -493,7 +512,7 @@ if (genesis) {
         balance: new BigNumber('1000'),
         staked: new BigNumber('100'),
         burned: ZERO,
-        allocated: new BigNumber('100')
+        allocation: [[new BigNumber('100'), 0]]
     }
     pushBlock(new Block(0, [], keypair))
 }
