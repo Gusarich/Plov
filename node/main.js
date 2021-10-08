@@ -96,8 +96,7 @@ function getAccountMaxAllocation (account) {
 
 function getAccountAllocation (account) {
     let total = ZERO
-    account = blockchainState.accounts[account]
-    for (let allocation in account.allocation) {
+    for (let allocation of blockchainState.accounts[account].allocation) {
         total = total.plus(allocation[0].times(allocation[1]))
     }
     return total
@@ -395,7 +394,7 @@ function initConnection (ws, client) {
                     blockchainState = message.data
                     for (let address in blockchainState.accounts) {
                         let account = blockchainState.accounts[address]
-                        let allocation = account.allocation.map(e => new BigNumber(e))
+                        let allocation = account.allocation.map(e => [new BigNumber(e[0]), e[1]])
                         blockchainState.accounts[address] = {
                             nonce: account.nonce,
                             balance: new BigNumber(account.balance),
