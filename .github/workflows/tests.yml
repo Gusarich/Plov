@@ -34,7 +34,7 @@ jobs:
 
       - name: install python packages
         run: |
-          pip install requests
+          pip install requests colorama
 
       - name: Node & Wallet tests
         working-directory: ./tests
