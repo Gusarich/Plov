@@ -8,14 +8,13 @@ import os
 import colorama
 
 
-colorama.init()
-
 if lib.IS_LINUX:
     PASSED_TEXT = 'Test passed ✔'
     FAILED_TEXT = 'Test failed ✘'
 else:
     PASSED_TEXT = 'Test passed'
     FAILED_TEXT = 'Test failed'
+    colorama.init()
 
 
 def print_after_test(passed):
