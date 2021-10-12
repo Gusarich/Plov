@@ -1,18 +1,30 @@
 from time import sleep
 from sys import exit, argv
 import requests
+import random
 import lib
 import shutil
 import os
+import colorama
+
+
+colorama.init()
+
+if lib.IS_LINUX:
+    PASSED_TEXT = 'Test passed ✔'
+    FAILED_TEXT = 'Test failed ✘'
+else:
+    PASSED_TEXT = 'Test passed'
+    FAILED_TEXT = 'Test failed'
 
 
 def print_after_test(passed):
     global total_tests, passed_tests
     if passed:
         passed_tests += 1
-        print(COLORS['passed'] + 'Test passed ✔')
+        print(COLORS['passed'] + PASSED_TEXT)
     else:
-        print(COLORS['failed'] + 'Test failed ✘')
+        print(COLORS['failed'] + FAILED_TEXT)
         if CAN_WRITE:
             try:
                 shutil.rmtree('tmp')
@@ -30,10 +42,12 @@ COLORS = {
     'description': '\033[90m',
     'passed': '\033[93m',
     'failed': '\033[91m',
-    'clear': '\x1b[0m'
+    'clear': '\033[39m'
 }
 LOGGING = True
 CAN_WRITE = argv[-1] != '--nofile'
+WS_PORT = random.randint(10000, 20000)
+HTTP_PORT = random.randint(8000, 10000)
 
 total_tests = 5
 passed_tests = 0
@@ -68,22 +82,22 @@ try:
     print(COLORS['description'] + 'Start several nodes' + COLORS['clear'])
 
     if CAN_WRITE:
-        lib.run_in_background('--ws-port 11100 --genesis --keypair tmp/kp1', logging=LOGGING)
+        lib.run_in_background(f'--ws-port {WS_PORT} --genesis --keypair tmp/kp1', logging=LOGGING)
     else:
-        lib.run_in_background('--ws-port 11100 --genesis --keypair ' + sk1, logging=LOGGING)
+        lib.run_in_background(f'--ws-port {WS_PORT} --genesis --keypair ' + sk1, logging=LOGGING)
     sleep(0.2)
-    lib.run_in_background('--ws-port 11101 --peer ws://127.0.0.1:11100', logging=LOGGING)
+    lib.run_in_background(f'--ws-port {WS_PORT + 1} --peer ws://127.0.0.1:{WS_PORT}', logging=LOGGING)
     sleep(0.2)
     if CAN_WRITE:
-        lib.run_in_background('--ws-port 11102 --peer ws://127.0.0.1:11100 --keypair tmp/kp2', logging=LOGGING)
+        lib.run_in_background(f'--ws-port {WS_PORT + 2} --peer ws://127.0.0.1:{WS_PORT} --keypair tmp/kp2', logging=LOGGING)
     else:
-        lib.run_in_background('--ws-port 11102 --peer ws://127.0.0.1:11100 --keypair ' + sk2, logging=LOGGING)
+        lib.run_in_background(f'--ws-port {WS_PORT + 2} --peer ws://127.0.0.1:{WS_PORT} --keypair ' + sk2, logging=LOGGING)
     sleep(0.2)
-    lib.run_in_background('--ws-port 11103 --http-port 8080 --peer ws://127.0.0.1:11101', logging=LOGGING)
+    lib.run_in_background(f'--ws-port {WS_PORT + 3} --http-port {HTTP_PORT} --peer ws://127.0.0.1:{WS_PORT + 1}', logging=LOGGING)
     sleep(0.2)
-    lib.run_in_background('--ws-port 11104 --peer ws://127.0.0.1:11102', logging=LOGGING)
+    lib.run_in_background(f'--ws-port {WS_PORT + 4} --peer ws://127.0.0.1:{WS_PORT + 2}', logging=LOGGING)
     sleep(0.2)
-    lib.run_in_background('--ws-port 11105 --http-port 8081 --peer ws://127.0.0.1:11104', logging=LOGGING)
+    lib.run_in_background(f'--ws-port {WS_PORT + 5} --http-port {HTTP_PORT + 1} --peer ws://127.0.0.1:{WS_PORT + 4}', logging=LOGGING)
     sleep(3)
 
     passed = all(lib.status)
@@ -97,8 +111,8 @@ print_after_test(passed)
 try:
     print(COLORS['header'] + 'Test #3')
     print(COLORS['description'] + 'Check balance' + COLORS['clear'])
-    run1 = lib.run_and_wait(f'plov balance --account {pk1} --node http://127.0.0.1:8080', logging=LOGGING)
-    run2 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:8080', logging=LOGGING)
+    run1 = lib.run_and_wait(f'plov balance --account {pk1} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
+    run2 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
     passed = run1 == '1000\n' and run2 == '0\n' and all(lib.status)
 except Exception as e:
     print(e)
@@ -111,25 +125,25 @@ try:
     print(COLORS['header'] + 'Test #4')
     print(COLORS['description'] + 'Transfer crypto' + COLORS['clear'])
     if CAN_WRITE:
-        run = lib.run_and_wait(f'plov transfer 10 {pk2} --account tmp/kp1 --node http://127.0.0.1:8080', logging=LOGGING)
+        run = lib.run_and_wait(f'plov transfer 10 {pk2} --account tmp/kp1 --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
     else:
-        run = lib.run_and_wait(f'plov transfer 10 {pk2} --account {sk1} --node http://127.0.0.1:8080', logging=LOGGING)
+        run = lib.run_and_wait(f'plov transfer 10 {pk2} --account {sk1} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
     passed = run.startswith('Success!') and all(lib.status)
     if passed:
         sleep(2)
-        run1 = lib.run_and_wait(f'plov balance --account {pk1} --node http://127.0.0.1:8081', logging=LOGGING)
-        run2 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:8081', logging=LOGGING)
+        run1 = lib.run_and_wait(f'plov balance --account {pk1} --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
+        run2 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
         passed = run1 == '990\n' and run2 == '10\n' and all(lib.status)
         if passed:
             if CAN_WRITE:
-                run = lib.run_and_wait(f'plov transfer 1.23 {pk1} --account tmp/kp2 --node http://127.0.0.1:8081', logging=LOGGING)
+                run = lib.run_and_wait(f'plov transfer 1.23 {pk1} --account tmp/kp2 --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
             else:
-                run = lib.run_and_wait(f'plov transfer 1.23 {pk1} --account {sk2} --node http://127.0.0.1:8081', logging=LOGGING)
+                run = lib.run_and_wait(f'plov transfer 1.23 {pk1} --account {sk2} --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
             passed = run.startswith('Success!') and all(lib.status)
             if passed:
                 sleep(2)
-                run1 = lib.run_and_wait(f'plov balance --account {pk1} --node http://127.0.0.1:8080', logging=LOGGING)
-                run2 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:8080', logging=LOGGING)
+                run1 = lib.run_and_wait(f'plov balance --account {pk1} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
+                run2 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
                 passed = run1 == '991.23\n' and run2 == '8.77\n' and all(lib.status)
 except Exception as e:
     print(e)
@@ -142,39 +156,39 @@ try:
     print(COLORS['header'] + 'Test #5')
     print(COLORS['description'] + 'Staking and unstaking' + COLORS['clear'])
     if CAN_WRITE:
-        run = lib.run_and_wait(f'plov stake 1.77 --account tmp/kp2 --node http://127.0.0.1:8080', logging=LOGGING)
+        run = lib.run_and_wait(f'plov stake 1.77 --account tmp/kp2 --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
     else:
-        run = lib.run_and_wait(f'plov stake 1.77 --account {sk2} --node http://127.0.0.1:8080', logging=LOGGING)
+        run = lib.run_and_wait(f'plov stake 1.77 --account {sk2} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
     passed = run.startswith('Success!') and all(lib.status)
     if passed:
         sleep(2)
-        run1 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:8081', logging=LOGGING)
+        run1 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
         passed = run1 == '7\n' and all(lib.status)
         if passed:
             if CAN_WRITE:
-                run = lib.run_and_wait(f'plov unstake 1.78 --account tmp/kp2 --node http://127.0.0.1:8081', logging=LOGGING)
+                run = lib.run_and_wait(f'plov unstake 1.78 --account tmp/kp2 --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
             else:
-                run = lib.run_and_wait(f'plov unstake 1.78 --account {sk2} --node http://127.0.0.1:8081', logging=LOGGING)
+                run = lib.run_and_wait(f'plov unstake 1.78 --account {sk2} --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
             passed = run.startswith('Error!') and all(lib.status)
             if passed:
                 if CAN_WRITE:
-                    run = lib.run_and_wait(f'plov unstake 1.76 --account tmp/kp2 --node http://127.0.0.1:8081', logging=LOGGING)
+                    run = lib.run_and_wait(f'plov unstake 1.76 --account tmp/kp2 --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
                 else:
-                    run = lib.run_and_wait(f'plov unstake 1.76 --account {sk2} --node http://127.0.0.1:8081', logging=LOGGING)
+                    run = lib.run_and_wait(f'plov unstake 1.76 --account {sk2} --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
                 passed = run.startswith('Success!') and all(lib.status)
                 if passed:
                     sleep(2)
-                    run1 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:8080', logging=LOGGING)
+                    run1 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
                     passed = run1 == '8.76\n' and all(lib.status)
                     if passed:
                         if CAN_WRITE:
-                            run = lib.run_and_wait(f'plov unstake 0.01 --account tmp/kp2 --node http://127.0.0.1:8080', logging=LOGGING)
+                            run = lib.run_and_wait(f'plov unstake 0.01 --account tmp/kp2 --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
                         else:
-                            run = lib.run_and_wait(f'plov unstake 0.01 --account {sk2} --node http://127.0.0.1:8080', logging=LOGGING)
+                            run = lib.run_and_wait(f'plov unstake 0.01 --account {sk2} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
                         passed = run.startswith('Success!') and all(lib.status)
                         if passed:
                             sleep(2)
-                            run1 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:8081', logging=LOGGING)
+                            run1 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:{HTTP_PORT + 1}', logging=LOGGING)
                             passed = run1 == '8.77\n' and all(lib.status)
 except Exception as e:
     print(e)

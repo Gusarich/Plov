@@ -3,7 +3,15 @@ import sys
 import threading
 
 
+if sys.platform in ['linux1', 'linux2', 'darwin']:
+    IS_LINUX = True
+else:
+    IS_LINUX = False
+
 CMD_PREFIX = 'node ../node/main.js '
+if IS_LINUX:
+    CMD_PREFIX = 'exec ' + CMD_PREFIX
+
 process_index = 0
 status = []
 processes = []
@@ -11,7 +19,7 @@ processes = []
 
 def _run_in_background(cmd, prefix, index, logging):
     status[index] = True
-    process = subprocess.Popen('exec ' + CMD_PREFIX + cmd,
+    process = subprocess.Popen(CMD_PREFIX + cmd,
                                shell=True,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
