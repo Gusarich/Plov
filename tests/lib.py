@@ -3,7 +3,7 @@ import sys
 import threading
 
 
-if sys.platform in ['linux1', 'linux2', 'darwin']:
+if sys.platform != 'win32':
     IS_LINUX = True
 else:
     IS_LINUX = False
