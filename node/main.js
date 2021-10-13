@@ -472,6 +472,7 @@ var httpPort
 var firstConnection
 var genesis
 var keypair
+var logging
 
 for (let i = 0; i < process.argv.length - 1; i += 1) {
     if (process.argv[i] == '--ws-port') {
@@ -490,6 +491,9 @@ for (let i = 0; i < process.argv.length - 1; i += 1) {
     }
     if (process.argv[i] == '--genesis') {
         genesis = true
+    }
+    if (process.argv[i] == '--logging') {
+        logging = true
     }
 }
 if (process.argv[process.argv.length - 1] == '--genesis') genesis = true
@@ -517,18 +521,20 @@ if (genesis) {
 
 setInterval(() => {
     if (lastBlock && getCurrentTimestamp() - lastBlock.timestamp >= BLOCK_TIME && getNextProducer() == myPublicKey) {
-        console.log('<<<<<<New block>>>>>>')
+        if (logging) console.log('<<<<<<New block>>>>>>')
         let block = createNewBlock(transactionPool, keypair)
         pushBlock(block)
         broadcastBlock(block)
     }
 }, HALF_BLOCK_TIME)
 
-setInterval(() => {
-    console.log('==============')
-    let s = blockchainState.accounts
-    for (let i in s) {
-        console.log(i, '=>', s[i].balance.toString())
-    }
-    console.log('==============')
-}, 1000)
+if (logging) {
+    setInterval(() => {
+        console.log('==============')
+        let s = blockchainState.accounts
+        for (let i in s) {
+            console.log(i, '=>', s[i].balance.toString())
+        }
+        console.log('==============')
+    }, 1000)
+}
