@@ -497,6 +497,7 @@ for (let i = 0; i < process.argv.length - 1; i += 1) {
     }
 }
 if (process.argv[process.argv.length - 1] == '--genesis') genesis = true
+if (process.argv[process.argv.length - 1] == '--logging') logging = true
 
 if (keypair == undefined) keypair = generateKeyPair()
 let myPublicKey = exportUint8Array(keypair.publicKey)
