@@ -1,13 +1,9 @@
 name: Notification on push
 
-on:
-  push:
-    branches:
-    - master
+on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
