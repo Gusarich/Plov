@@ -1,6 +1,14 @@
-- name: Discord notification
-  env:
-    DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-  uses: Ilshidur/action-discord@master
-  with:
-    args: 'The project {{ EVENT_PAYLOAD.repository.full_name }} has been deployed.'
+name: Discord notification
+
+on: [push]
+
+jobs:
+    discord:
+        runs-on: ubuntu-latest
+        env:
+            DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        steps:
+            - name: Notify discord channel
+                uses: Ilshidur/action-discord@master
+                with:
+                    args: 'The project {{ EVENT_PAYLOAD.repository.full_name }} has been deployed.'
