@@ -21,6 +21,11 @@ COLORS = AnsiAppColors(
     user_default='\033[39m',
 )
 
+LOGGING = True
+CAN_WRITE = argv[-1] != '--nofile'
+WS_PORT = random.randint(10000, 20000)
+HTTP_PORT = random.randint(8000, 10000)
+
 if lib.IS_LINUX:
     PASSED_TEXT = 'Test passed ✔'
     FAILED_TEXT = 'Test failed ✘'
@@ -48,11 +53,6 @@ def print_after_test(passed):
     print(f'Total {passed_tests}/{total_tests}' + COLORS.user_default)
     sleep(1)
 
-
-LOGGING = True
-CAN_WRITE = argv[-1] != '--nofile'
-WS_PORT = random.randint(10000, 20000)
-HTTP_PORT = random.randint(8000, 10000)
 
 total_tests = 5
 passed_tests = 0
