@@ -1,5 +1,6 @@
 from time import sleep
-from sys import exit, argv
+from sys import argv
+from collections import namedtuple
 import os
 import random
 import shutil
@@ -7,6 +8,18 @@ import shutil
 import colorama
 
 import lib
+
+AnsiAppColors = namedtuple(
+    'AnsiAppColors',
+    ['header', 'description', 'passed', 'failed', 'user_default']
+)
+COLORS = AnsiAppColors(
+    header='\033[95m',
+    description='\033[90m',
+    passed='\033[93m',
+    failed='\033[91m',
+    user_default='\033[39m',
+)
 
 if lib.IS_LINUX:
     PASSED_TEXT = 'Test passed ✔'
@@ -18,12 +31,12 @@ else:
 
 
 def print_after_test(passed):
-    global total_tests, passed_tests
+    global passed_tests
     if passed:
         passed_tests += 1
-        print(COLORS['passed'] + PASSED_TEXT)
+        print(COLORS.passed + PASSED_TEXT)
     else:
-        print(COLORS['failed'] + FAILED_TEXT)
+        print(COLORS.failed + FAILED_TEXT)
         if CAN_WRITE:
             try:
                 shutil.rmtree('tmp')
@@ -32,17 +45,10 @@ def print_after_test(passed):
         for process in lib.processes:
             process.kill()
         exit(passed_tests != total_tests)
-    print(f'Total {passed_tests}/{total_tests}' + COLORS['clear'])
+    print(f'Total {passed_tests}/{total_tests}' + COLORS.user_default)
     sleep(1)
 
 
-COLORS = {
-    'header': '\033[95m',
-    'description': '\033[90m',
-    'passed': '\033[93m',
-    'failed': '\033[91m',
-    'clear': '\033[39m'
-}
 LOGGING = True
 CAN_WRITE = argv[-1] != '--nofile'
 WS_PORT = random.randint(10000, 20000)
@@ -53,8 +59,8 @@ passed_tests = 0
 
 # TEST 1
 try:
-    print(COLORS['header'] + 'Test #1')
-    print(COLORS['description'] + 'Generate keypairs' + COLORS['clear'])
+    print(COLORS.header + 'Test #1')
+    print(COLORS.description + 'Generate keypairs' + COLORS.user_default)
 
     if CAN_WRITE:
         os.makedirs('tmp', exist_ok=True)
@@ -75,8 +81,8 @@ print_after_test(passed)
 
 # TEST 2
 try:
-    print(COLORS['header'] + 'Test #2')
-    print(COLORS['description'] + 'Start several nodes' + COLORS['clear'])
+    print(COLORS.header + 'Test #2')
+    print(COLORS.description + 'Start several nodes' + COLORS.user_default)
 
     if CAN_WRITE:
         lib.run_in_background(f'--ws-port {WS_PORT} --genesis --keypair tmp/kp1', logging=LOGGING)
@@ -109,8 +115,8 @@ print_after_test(passed)
 
 # TEST 3
 try:
-    print(COLORS['header'] + 'Test #3')
-    print(COLORS['description'] + 'Check balance' + COLORS['clear'])
+    print(COLORS.header + 'Test #3')
+    print(COLORS.description + 'Check balance' + COLORS.user_default)
     run1 = lib.run_and_wait(f'plov balance --account {pk1} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
     run2 = lib.run_and_wait(f'plov balance --account {pk2} --node http://127.0.0.1:{HTTP_PORT}', logging=LOGGING)
     passed = run1 == '1000\n' and run2 == '0\n' and all(lib.status)
@@ -121,8 +127,8 @@ print_after_test(passed)
 
 # TEST 4
 try:
-    print(COLORS['header'] + 'Test #4')
-    print(COLORS['description'] + 'Transfer crypto' + COLORS['clear'])
+    print(COLORS.header + 'Test #4')
+    print(COLORS.description + 'Transfer crypto' + COLORS.user_default)
     if CAN_WRITE:
         run = lib.run_and_wait(f'plov transfer 10 {pk2} --account tmp/kp1 --node http://127.0.0.1:{HTTP_PORT}',
                                logging=LOGGING)
@@ -161,8 +167,8 @@ print_after_test(passed)
 
 # TEST 5
 try:
-    print(COLORS['header'] + 'Test #5')
-    print(COLORS['description'] + 'Staking and unstaking' + COLORS['clear'])
+    print(COLORS.header + 'Test #5')
+    print(COLORS.description + 'Staking and unstaking' + COLORS.user_default)
     if CAN_WRITE:
         run = lib.run_and_wait(f'plov stake 1.77 --account tmp/kp2 --node http://127.0.0.1:{HTTP_PORT}',
                                logging=LOGGING)
