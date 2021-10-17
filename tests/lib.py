@@ -9,8 +9,6 @@ else:
     IS_LINUX = False
 
 CMD_PREFIX = 'node ../node/main.js '
-if IS_LINUX:
-    CMD_PREFIX = 'exec ' + CMD_PREFIX
 
 process_index = 0
 status = []
