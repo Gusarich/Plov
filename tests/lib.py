@@ -5,7 +5,8 @@ from os.path import dirname
 
 IS_WINDOWS = sys.platform == 'win32'
 
-CMD_PREFIX = f'node {dirname(__file__)}/../node/main.js '
+MAIN_FILE = f'{dirname(__file__)}/../node/main.js'
+CMD_PREFIX = f'node {MAIN_FILE} '
 
 process_index = 0
 status = []
