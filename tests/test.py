@@ -1,5 +1,5 @@
 from time import sleep
-from sys import argv
+from sys import argv, exit
 from collections import namedtuple
 import os
 import random
