@@ -29,7 +29,9 @@ HTTP_PORT = random.randint(8000, 10000)
 PASSED_TEXT = 'Test passed ✔'
 FAILED_TEXT = 'Test failed ✘'
 if lib.IS_WINDOWS:
+    # ANSI escape sequences are not available in Windows.
     colorama.init()
+    # Can't use UTF-8 characters in Windows command line.
     PASSED_TEXT = 'Test passed'
     FAILED_TEXT = 'Test failed'
 
