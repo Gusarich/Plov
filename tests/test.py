@@ -35,6 +35,10 @@ else:
     colorama.init()
 
 
+total_tests = 5
+passed_tests = 0
+
+
 def print_after_test(passed):
     global passed_tests
     if passed:
@@ -53,9 +57,6 @@ def print_after_test(passed):
     print(f'Total {passed_tests}/{total_tests}' + COLORS.user_default)
     sleep(1)
 
-
-total_tests = 5
-passed_tests = 0
 
 # TEST 1
 try:
