@@ -87,8 +87,8 @@ try:
     lib.run_in_background(f'--ws-port {WS_PORT + 3} --http-port {HTTP_PORT} --peer ws://127.0.0.1:{WS_PORT + 1}',
                           logging_enabled=LOGGING_ENABLED)
     sleep(0.2)
-    lib.run_in_background(
-        f'--ws-port {WS_PORT + 4} --peer ws://127.0.0.1:{WS_PORT + 2}', logging_enabled=LOGGING_ENABLED)
+    lib.run_in_background(f'--ws-port {WS_PORT + 4} --peer ws://127.0.0.1:{WS_PORT + 2}',
+                          logging_enabled=LOGGING_ENABLED)
     sleep(0.2)
     lib.run_in_background(f'--ws-port {WS_PORT + 5} --http-port {HTTP_PORT + 1} --peer ws://127.0.0.1:{WS_PORT + 4}',
                           logging_enabled=LOGGING_ENABLED)
