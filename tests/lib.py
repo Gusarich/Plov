@@ -3,10 +3,7 @@ import sys
 import threading
 
 
-if sys.platform.startswith('linux'):
-    IS_LINUX = True
-else:
-    IS_LINUX = False
+IS_WINDOWS = sys.platform == 'win32'
 
 CMD_PREFIX = 'node ../node/main.js '
 

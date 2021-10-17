@@ -26,13 +26,12 @@ USE_FILESYSTEM = argv[-1] != '--nofile'
 WS_PORT = random.randint(10000, 20000)
 HTTP_PORT = random.randint(8000, 10000)
 
-if lib.IS_LINUX:
-    PASSED_TEXT = 'Test passed ✔'
-    FAILED_TEXT = 'Test failed ✘'
-else:
+PASSED_TEXT = 'Test passed ✔'
+FAILED_TEXT = 'Test failed ✘'
+if lib.IS_WINDOWS:
+    colorama.init()
     PASSED_TEXT = 'Test passed'
     FAILED_TEXT = 'Test failed'
-    colorama.init()
 
 
 total_tests = 5
