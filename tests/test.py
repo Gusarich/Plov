@@ -82,7 +82,7 @@ try:
     lib.run_in_background(f'--ws-port {WS_PORT + 1} --peer ws://127.0.0.1:{WS_PORT}', logging_enabled=LOGGING_ENABLED)
     sleep(0.2)
     lib.run_in_background(f'--ws-port {WS_PORT + 2} --peer ws://127.0.0.1:{WS_PORT} --keypair tmp/kp2',
-                              logging_enabled=LOGGING_ENABLED)
+                          logging_enabled=LOGGING_ENABLED)
     sleep(0.2)
     lib.run_in_background(f'--ws-port {WS_PORT + 3} --http-port {HTTP_PORT} --peer ws://127.0.0.1:{WS_PORT + 1}',
                           logging_enabled=LOGGING_ENABLED)
@@ -119,7 +119,7 @@ try:
     print(COLORS.header + 'Test #4')
     print(COLORS.description + 'Transfer crypto' + COLORS.user_default)
     run = lib.run_and_wait(f'plov transfer 10 {public_key2} --account tmp/kp1 --node http://127.0.0.1:{HTTP_PORT}',
-                               logging_enabled=LOGGING_ENABLED)
+                           logging_enabled=LOGGING_ENABLED)
     passed = run.startswith('Success!') and all(lib.status)
     if passed:
         sleep(3)

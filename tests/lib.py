@@ -1,11 +1,11 @@
 import subprocess
 import sys
 import threading
-
+from os.path import dirname
 
 IS_WINDOWS = sys.platform == 'win32'
 
-CMD_PREFIX = 'node ../node/main.js '
+CMD_PREFIX = f'node {dirname(__file__)}/../node/main.js '
 
 process_index = 0
 status = []
