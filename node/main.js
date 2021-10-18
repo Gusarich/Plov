@@ -75,7 +75,7 @@ function getNextProducer () {
     for (let account in blockchainState.accounts) {
         // We generated random coin index and now we need to find producer that
         // has this coin in his allocation
-        coinIndex = coinIndex.minus(getAccountAllocation(account))
+        coinIndex = coinIndex.minus(getAccountAllocationWeight(account))
         if (coinIndex.lte(0)) return account
     }
 }
@@ -137,7 +137,7 @@ function getAccountMaxAllocation (account) {
     return blockchainState.accounts[account].burned.times(2).plus(blockchainState.accounts[account].staked)
 }
 
-function getAccountAllocation (account) {
+function getAccountAllocationWeight (account) {
     /*
     Function that returns current allocation of input account
     account.allocation is array of pairs [amount, block_index] which means
@@ -168,7 +168,7 @@ function getTotalAllocated () {
     let total = ZERO
     for (let account in blockchainState.accounts) {
         // We just iterate through all accounts and sum their allocations
-        total = total.plus(getAccountAllocation(account))
+        total = total.plus(getAccountAllocationWeight(account))
     }
     return total
 }
@@ -350,10 +350,10 @@ function verifyTransaction (transaction) {
         else if (transaction.action == 'unstake') good = transaction.amount.lte(blockchainState.accounts[transaction.fromPublicKey].staked)
         // Good if unstake amount is lower than staked on account
 
-        else if (transaction.action == 'allocate') good = getAccountAllocation(transaction.fromPublicKey).plus(transaction.amount).lte(getAccountMaxAllocation(transaction.fromPublicKey))
+        else if (transaction.action == 'allocate') good = getAccountAllocationWeight(transaction.fromPublicKey).plus(transaction.amount).lte(getAccountMaxAllocation(transaction.fromPublicKey))
         // Good if allocation amount + current allocation is lower than max possible allocation for account
 
-        else if (transaction.action == 'deallocate') good = getAccountAllocation(transaction.fromPublicKey).gte(transaction.amount)
+        else if (transaction.action == 'deallocate') good = getAccountAllocationWeight(transaction.fromPublicKey).gte(transaction.amount)
         // Good if deallocation amount is lower than current allocated amount for account
 
         return (['transfer', 'stake', 'unstake', 'allocate', 'deallocate'].includes(transaction.action)) &&  // Action is correct
