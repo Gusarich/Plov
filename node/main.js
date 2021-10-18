@@ -173,6 +173,15 @@ function getTotalAllocated () {
     return total
 }
 
+function newEpoch () {
+    /*
+    This function begins new epoch, recalculates weights of producers and
+    storing all that info in blockchainState
+    */
+
+    blockchainState.epoch += 1
+}
+
 function pushBlock (block) {
     /*
     In moment when this function is called, new block is already verified and
@@ -182,6 +191,11 @@ function pushBlock (block) {
 
     lastBlock = block
     blockchainState.height = block.index + 1
+
+    if (blockchainState.height % BLOCKS_IN_EPOCH == 0) {
+        // New epoch should begin
+        newEpoch()
+    }
 
     blockTransactionHashes = []
     for (let i = 0; i < block.transactions.length; i += 1) blockTransactionHashes.push(block.transactions[i].hash)
@@ -359,12 +373,14 @@ function verifyTransaction (transaction) {
 var lastBlock
 var blockchainState = {
     height: 0,
+    epoch: 0,
     accounts: {}
 }
 var transactionPool = []
 
 const BLOCK_TIME = 1000  // Block time, ms
 const HALF_BLOCK_TIME = Math.floor(BLOCK_TIME / 2)
+const BLOCKS_IN_EPOCH = 10
 //=============Blockchain==============//
 
 
