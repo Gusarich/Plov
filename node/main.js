@@ -151,7 +151,7 @@ function getAccountAllocationWeight (account) {
 
     let total = ZERO
     for (let allocation of blockchainState.accounts[account].allocation) {
-        total = total.plus(allocation[0].times(blockchainState.height - allocation[1]))
+        total = total.plus(allocation[0].times(blockchainState.height - allocation[1] + 1))
     }
     return total
 }
@@ -180,6 +180,23 @@ function newEpoch () {
     */
 
     blockchainState.epoch += 1
+
+    let total = ZERO,
+        weights = [],
+        allocation
+
+    for (let account in blockchainState.accounts) {
+        // We just iterate through all accounts and sum their allocations
+        allocation = getAccountAllocationWeight(account)
+        if (allocation.gt(0)) {
+            // If there is allocation, add producer weight to weights array
+            total = total.plus(allocation)
+            weights.push([account, allocation])
+        }
+    }
+
+    blockchainState.totalAllocationWeight = total
+    blockchainState.epochProducerWeights = weights
 }
 
 function pushBlock (block) {
@@ -374,7 +391,9 @@ var lastBlock
 var blockchainState = {
     height: 0,
     epoch: 0,
-    accounts: {}
+    accounts: {},
+    epochProducerWeights: [],
+    totalAllocationWeight: ZERO
 }
 var transactionPool = []
 
@@ -553,10 +572,12 @@ function initConnection (ws, client) {
 
                     send(ws, {action: Actions.QUERY_LAST_BLOCK})  // Query for last block
                     blockchainState = message.data  // Save blockchainState
+
+                    blockchainState.totalAllocationWeight = new BigNumber(blockchainState.totalAllocationWeight)
+
                     for (let address in blockchainState.accounts) {
-                        // Iterate through accounts and store them
+                        // Iterate through accounts and store values as BigNumbers
                         let account = blockchainState.accounts[address]
-                        // Below we translate all numbers to BigNumbers
                         blockchainState.accounts[address] = {
                             nonce: account.nonce,
                             balance: new BigNumber(account.balance),
@@ -564,6 +585,11 @@ function initConnection (ws, client) {
                             burned: new BigNumber(account.burned),
                             allocation: account.allocation.map(e => [new BigNumber(e[0]), e[1]])
                         }
+                    }
+
+                    for (let i = 0; i < blockchainState.epochProducerWeights.length; i += 1) {
+                        // Iterate through producers and store values as BigNumbers
+                        blockchainState.epochProducerWeights[i][1] = new BigNumber(blockchainState.epochProducerWeights[i][1])
                     }
                 }
                 break
@@ -698,6 +724,7 @@ if (genesis) {
         burned: ZERO,
         allocation: [[new BigNumber('100'), 0]]
     }
+    newEpoch()
     pushBlock(new Block(0, [], keypair))
 }
 
