@@ -70,13 +70,13 @@ function getNextProducer () {
 
     // Not sure about RNG...
     let randomNumber = lastBlockHash.times(currentSlot).plus(lastBlock.timestamp)
-    let coinIndex = randomNumber.mod(getTotalAllocated())
+    let coinIndex = randomNumber.mod(blockchainState.totalAllocationWeight)
 
-    for (let account in blockchainState.accounts) {
+    for (let i = 0; i < blockchainState.epochProducerWeights.length; i += 1) {
         // We generated random coin index and now we need to find producer that
         // has this coin in his allocation
-        coinIndex = coinIndex.minus(getAccountAllocationWeight(account))
-        if (coinIndex.lte(0)) return account
+        coinIndex = coinIndex.minus(blockchainState.epochProducerWeights[i][1])
+        if (coinIndex.lte(0)) return blockchainState.epochProducerWeights[i][0]
     }
 }
 
@@ -152,23 +152,6 @@ function getAccountAllocationWeight (account) {
     let total = ZERO
     for (let allocation of blockchainState.accounts[account].allocation) {
         total = total.plus(allocation[0].times(blockchainState.height - allocation[1] + 1))
-    }
-    return total
-}
-
-function getTotalAllocated () {
-    // This function returns sum of all allocated tokens for accounts
-
-    /*
-    OPTIMIZE: Right now this function works with difficulty O(N*M)
-              But can be done in O(1) by having another variable in
-              BlockchainState that shows total allocated tokens
-    */
-
-    let total = ZERO
-    for (let account in blockchainState.accounts) {
-        // We just iterate through all accounts and sum their allocations
-        total = total.plus(getAccountAllocationWeight(account))
     }
     return total
 }
@@ -301,7 +284,6 @@ function verifyBlock (block, fullCheck) {
     try {
         if (fullCheck) {
             // fullCheck Means that we will check all transactions in block
-
             if (block.producer != getNextProducer()) return false
 
             for (let i = 0; i < block.transactions.length; i += 1) {
