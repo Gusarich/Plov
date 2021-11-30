@@ -328,6 +328,14 @@ function verifySignature (message, signature, publicKey) {
     }
 }
 
+function getAccountCurrentGas (account) {
+    let blocks = blockchainState.height - blockchainState.accounts[account].lastTxBlock,
+        maxGas = getAccountMaxAllocation(account).times(GAS_PER_TOKEN),
+        blocksPerDay = (86400000 / BLOCK_TIME),
+        gasIncrease = maxGas.times(blocks).div(blocksPerDay)
+    return BigNumber.min(maxGas, blockchainState.accounts[account].gas.plus(gasIncrease))
+}
+
 function getTransactionHash (transaction) {
     // This function calculates hash of transaction
     return exportUint8Array(nacl.hash(decodeUTF8(getTransactionString(transaction))))
@@ -384,6 +392,7 @@ var transactionPool = []
 const BLOCK_TIME = 1000  // Block time, ms
 const HALF_BLOCK_TIME = Math.floor(BLOCK_TIME / 2)
 const BLOCKS_IN_EPOCH = 10
+const GAS_PER_TOKEN = 1000000  // Max gas per staked token
 //=============Blockchain==============//
 
 
