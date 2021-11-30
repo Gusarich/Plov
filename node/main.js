@@ -218,6 +218,8 @@ function pushBlock (block) {
                     balance: ZERO,
                     staked: ZERO,
                     burned: ZERO,
+                    gas: ZERO,
+                    lastTxBlock: 0,
                     allocation: []
                 }
             }
@@ -428,6 +430,8 @@ function initHTTPServer (port) {
                 balance: 0,
                 staked: 0,
                 burned: 0,
+                gas: 0,
+                lastTxBlock: 0,
                 allocation: []
             }))
         }
@@ -565,6 +569,8 @@ function initConnection (ws, client) {
                             balance: new BigNumber(account.balance),
                             staked: new BigNumber(account.staked),
                             burned: new BigNumber(account.burned),
+                            gas: new BigNumber(account.gas),
+                            lastTxBlock: account.lastTxBlock,
                             allocation: account.allocation.map(e => [new BigNumber(e[0]), e[1]])
                         }
                     }
@@ -704,6 +710,8 @@ if (genesis) {
         balance: new BigNumber('1000'),
         staked: new BigNumber('100'),
         burned: ZERO,
+        gas: ZERO,
+        lastTxBlock: 0,
         allocation: [[new BigNumber('100'), 0]]
     }
     newEpoch()
