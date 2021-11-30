@@ -276,6 +276,8 @@ function pushBlock (block) {
         }
 
         blockchainState.accounts[tx.fromPublicKey].nonce += 1
+        blockchainState.accounts[tx.fromPublicKey].lastTxBlock = block.index + 1
+        blockchainState.accounts[tx.fromPublicKey].gas = getAccountCurrentGas(tx.fromPublicKey).minus(100)
     }
 }
 
