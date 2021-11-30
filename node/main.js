@@ -276,8 +276,11 @@ function pushBlock (block) {
         }
 
         blockchainState.accounts[tx.fromPublicKey].nonce += 1
-        blockchainState.accounts[tx.fromPublicKey].lastTxBlock = block.index + 1
-        blockchainState.accounts[tx.fromPublicKey].gas = getAccountCurrentGas(tx.fromPublicKey).minus(100)
+
+        if (tx.action != 'stake') {
+            blockchainState.accounts[tx.fromPublicKey].lastTxBlock = block.index + 1
+            blockchainState.accounts[tx.fromPublicKey].gas = getAccountCurrentGas(tx.fromPublicKey).minus(100)
+        }
     }
 }
 
@@ -367,6 +370,13 @@ function verifyTransaction (transaction) {
         else if (transaction.action == 'deallocate') good = getAccountAllocationWeight(transaction.fromPublicKey).gte(transaction.amount)
         // Good if deallocation amount is lower than current allocated amount for account
 
+        if (transaction.action != 'stake') good = good && getAccountCurrentGas(transaction.fromPublicKey).gte(100)
+        // Account has enough gas for transaction
+        // TODO: It's stupid
+        // people shouldn't have possibility to send free from gas transactions
+        // they should receive first stake for gas from other users
+        // like wallets or their other accounts
+
         return (['transfer', 'stake', 'unstake', 'allocate', 'deallocate'].includes(transaction.action)) &&  // Action is correct
                (transaction.fromPublicKey in blockchainState.accounts) &&  // Transaction sender is in blockchainState
                (transaction.nonce == blockchainState.accounts[transaction.fromPublicKey].nonce + 1) &&  // Nonce is correct
@@ -394,7 +404,7 @@ var transactionPool = []
 const BLOCK_TIME = 1000  // Block time, ms
 const HALF_BLOCK_TIME = Math.floor(BLOCK_TIME / 2)
 const BLOCKS_IN_EPOCH = 10
-const GAS_PER_TOKEN = 1000000  // Max gas per staked token
+const GAS_PER_TOKEN = new BigNumber('1000000000')  // Max gas per staked token
 //=============Blockchain==============//
 
 
