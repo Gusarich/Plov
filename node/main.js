@@ -72,12 +72,29 @@ function getNextProducer () {
     let randomNumber = lastBlockHash.times(currentSlot).plus(lastBlock.timestamp)
     let coinIndex = randomNumber.mod(blockchainState.totalAllocationWeight)
 
-    for (let i = 0; i < blockchainState.epochProducerWeights.length; i += 1) {
-        // We generated random coin index and now we need to find producer that
-        // has this coin in his allocation
-        coinIndex = coinIndex.minus(blockchainState.epochProducerWeights[i][1])
-        if (coinIndex.lte(0)) return blockchainState.epochProducerWeights[i][0]
+    /*
+    We generated random coin index and now we need to find producer that
+    has this coin in his allocation. Binary search is used to speed up
+    this process
+    */
+
+    let left = 0,
+        right = blockchainState.epochProducerWeights.length - 1,
+        middle,
+        producerIndex
+
+    while (left <= right) {
+        middle = Math.floor((left + right) / 2)
+        if (blockchainState.epochProducerWeights[middle][1].gt(coinIndex)) {
+            producerIndex = middle
+            right = middle - 1
+        }
+        else {
+            left = middle + 1
+        }
     }
+
+    return blockchainState.epochProducerWeights[producerIndex][0]
 }
 
 class Block {
@@ -168,13 +185,21 @@ function newEpoch () {
         weights = [],
         allocation
 
+    /*
+    If we simply just store allocation weights into array,
+    each block producer will be found in N iterations, where N is amount of
+    producers that has any allocation.
+    To optimize it, we will store allocation weights as prefix sums array,
+    so that we can find producer using binary search in just log2(N) iterations
+    */
+
     for (let account in blockchainState.accounts) {
         // We just iterate through all accounts and sum their allocations
         allocation = getAccountAllocationWeight(account)
         if (allocation.gt(0)) {
             // If there is allocation, add producer weight to weights array
             total = total.plus(allocation)
-            weights.push([account, allocation])
+            weights.push([account, total])
         }
     }
 
