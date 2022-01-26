@@ -30,6 +30,7 @@ jobs:
           npm i body-parser
           npm i ws
           npm i sync-fetch
+          npm i yargs
           sudo npm i -g ./wallet
 
       - name: install python packages
